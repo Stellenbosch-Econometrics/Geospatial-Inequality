@@ -1,5 +1,5 @@
 
-
+# Taken from wikipedia: with small-sample corrections
 gini_wiki <- function(x) {1 + 2/(length(x)-1) * (sum(seq_along(x)*sort(x)) / sum(x) - length(x))} 
 
 gini_noss <- function(x) 2/length(x) * sum(seq_along(x)*sort(x)) / sum(x) - (length(x)+1)/length(x) # same as in Galimberti et al. (2020)
