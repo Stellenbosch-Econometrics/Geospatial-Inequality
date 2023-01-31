@@ -6,8 +6,7 @@ library(fastverse)
 fastverse_extend(qs) 
 set_collapse(nthreads = 4, na.rm = FALSE)
 
-gini <- function(x) 1-sum(cumsum(sort(x/sum(x)))[-length(x)]/(length(x)-1))*2
-gini_wiki <- function(x) {1-2/(length(x)-1) * (length(x)-sum(seq_along(x)*sort(x)) / sum(x))} # Slightly faster
+source("code/gini_helper.R")
 source("/Users/sebastiankrantz/Documents/IFW Kiel/Africa-Infrastructure/code/osm_helpers.R")
 
 # Import data and cropping to Africa
