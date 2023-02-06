@@ -181,6 +181,41 @@ upsample_cells <- function(dggrid, lon, lat, km, times) {
   return(cells)
 }
 
+gridded_distance_interpol <- function(degree_grid, y, points_s2, cells_s2, FUN, thresh, step = 1L, tol = 0.1, w = NULL, ..., verbose = FALSE) {
+  if(length(y) != length(points_s2)) stop("length(y) must match length(points_s2)")
+  degrees = qM(degree_grid)
+  if(!identical(colnames(degrees), c("lon", "lat"))) stop("degree_grid must be a data frame with columns named 'lon' and 'lat'")
+  wnull = is.null(w)
+  if(!wnull && length(w) != length(y)) stop("length(w) must match length(y)")
+  
+  res = alloc(NA_real_, length(y))
+  px = s2_x(points_s2); py = s2_y(points_s2); cx = s2_x(cells_s2); cy = s2_y(cells_s2)
+  
+  for(d in mrtl(degrees)) {
+    if(verbose) cat("lon =", d[1L], "lat =", d[2L], fill = TRUE)
+    which_cells = which(between(cx, d[1L], d[1L]+step) & between(cy, d[2L], d[2L]+step))
+    which_points = which(between(px, d[1L]-tol, d[1L]+(tol+step)) & between(py, d[2L]-tol, d[2L]+(tol+step)))
+    if(length(which_cells) == 0L || length(which_points) < 2L) next
+    points_s2_subset = points_s2[which_points]
+    y_subset = y[which_points]
+    if(wnull) {
+      for(i in which_cells) {
+        disti = s2_distance(points_s2_subset, cells_s2[i])
+        ind = which(disti < thresh)
+        if(length(ind) > 1L) res[i] = FUN(y_subset[ind], thresh - disti[ind], ...)
+      }
+    } else {
+      w_subset = w[which_points]
+      for(i in which_cells) {
+        disti = s2_distance(points_s2_subset, cells_s2[i])
+        ind = which(disti < thresh)
+        if(length(ind) > 1L) res[i] = FUN(y_subset[ind], w_subset[ind] * (thresh - disti[ind])/thresh, ...) 
+      }
+    }
+  }
+  return(res)
+}
+
 # Starting with IWI -----------------------------------------------------------------------------------------
 
 # Takes around 1 min each...
@@ -197,43 +232,8 @@ SA_IWI_cells_s2 = SA_IWI_cells %$% s2_lnglat(lon_deg, lat_deg)
 s2_distance(SA_IWI_s2, SA_IWI_cells_s2[[1]])
 
 # Thus go degree-wise
-degree_grid = SA_IWI_round %$% expand.grid(lon = floor(min(lon)):ceiling(max(lon)), 
-                                          lat = floor(min(lat)):ceiling(max(lat)))
-
-gridded_distance_interpol <- function(degree_grid, y, points_s2, cells_s2, FUN, thresh, step = 1L, tol = 0.1, w = NULL, ..., verbose = FALSE) {
-  if(length(y) != length(points_s2)) stop("length(y) must match length(points_s2)")
-  degrees = qM(degree_grid)
-  if(!identical(colnames(degrees), c("lon", "lat"))) stop("degree_grid must be a data frame with columns named 'lon' and 'lat'")
-  wnull = is.null(w)
-  if(!wnull && length(w) != length(y)) stop("length(w) must match length(y)")
-
-  res = numeric(length(y))
-  px = s2_x(points_s2); py = s2_y(points_s2); cx = s2_x(cells_s2); cy = s2_y(cells_s2)
-  
-  for(d in mrtl(degrees)) {
-      if(verbose) cat("lon =", d[1L], "lat =", d[2L], fill = TRUE)
-      which_cells = which(between(cx, d[1L], d[1L]+step) & between(cy, d[2L], d[2L]+step))
-      which_points = which(between(px, d[1L]-tol, d[1L]+(tol+step)) & between(py, d[2L]-tol, d[2L]+(tol+step)))
-      if(length(which_cells) == 0L || length(which_points) < 2L) next
-      points_s2_subset = points_s2[which_points]
-      y_subset = y[which_points]
-      if(wnull) {
-        for(i in which_cells) {
-          disti = s2_distance(points_s2_subset, cells_s2[i])
-          ind = which(disti < thresh)
-          res[i] = if(length(ind) > 1L) FUN(y_subset[ind], thresh - disti[ind], ...) else NA_real_
-        }
-      } else {
-        w_subset = w[which_points]
-        for(i in which_cells) {
-          disti = s2_distance(points_s2_subset, cells_s2[i])
-          ind = which(disti < thresh)
-          res[i] = if(length(ind) > 1L) FUN(y_subset[ind], w_subset[ind] * (thresh - disti[ind])/thresh, ...) else NA_real_
-        }
-      }
-  }
-  return(res)
-}
+# degree_grid = SA_IWI_round %$% expand.grid(lon = floor(min(lon)):ceiling(max(lon)), 
+#                                            lat = floor(min(lat)):ceiling(max(lat)))
 
 degree_grid = SA_IWI_round %$% expand.grid(lon = seq(floor(min(lon)), ceiling(max(lon)), 0.5),
                                           lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
@@ -272,26 +272,32 @@ SA_RWI_cells$WGINI = gridded_distance_interpol(degree_grid, SA_RWI_round$RWI, SA
 fwrite(SA_RWI_cells, "data/SA_RWI_GINI_1km_hex_10km_radius.csv")
 
 # Same for NL21 -------------------------------------------------------------------------------------------------------------------------
+SA_NL21_round_pos = SA_NL21_round %>% fsubset(NL21 > 0)
+
 system.time({
-  SA_NL21_cells = SA_NL21_round %$% upsample_cells(world_1km_hex, lon, lat, 0.3, 5)
+  SA_NL21_cells = SA_NL21_round_pos %$% upsample_cells(world_1km_hex, lon, lat, 0.3, 10)
 })
 SA_NL21_cells = add_vars(qDT(dgSEQNUM_to_GEO(world_1km_hex, SA_NL21_cells)), cell = SA_NL21_cells, pos = "front")
 
+# # Restricting to Land area of south Africa: too low resolution
+# SA_shp_sf = st_read(dggridR::dg_shpfname_south_africa())
+# plot(SA_shp_sf)
+
 # Creating S2 geometries
-SA_NL21_s2 = SA_NL21_round %$% s2_lnglat(lon, lat)
+SA_NL21_s2 = SA_NL21_round_pos %$% s2_lnglat(lon, lat)
 SA_NL21_cells_s2 = SA_NL21_cells %$% s2_lnglat(lon_deg, lat_deg)
 
 # This still takes quite long
 s2_distance(SA_NL21_s2, SA_NL21_cells_s2[[1]])
 
-degree_grid = SA_NL21_round %$% expand.grid(lon = seq(floor(min(lon)), ceiling(max(lon)), 0.5),
-                                            lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
+degree_grid = SA_NL21_round_pos %$% expand.grid(lon = seq(floor(min(lon)), ceiling(max(lon)), 0.5),
+                                                lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
 
-SA_NL21_cells$GINI = gridded_distance_interpol(degree_grid, SA_NL21_round$NL21, SA_NL21_s2, SA_NL21_cells_s2, 
-                                               thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, verbose = TRUE)
+SA_NL21_cells$GINI = gridded_distance_interpol(degree_grid, SA_NL21_round_pos$NL21, SA_NL21_s2, SA_NL21_cells_s2, 
+                                               thresh = 5000, step = 0.5, tol = 0.06, FUN = w_gini, verbose = TRUE)
 
-SA_NL21_cells$WGINI = gridded_distance_interpol(degree_grid, SA_NL21_round$NL21, SA_NL21_s2, SA_NL21_cells_s2, 
-                                                thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, w = SA_NL21_round$pop, verbose = TRUE)
+SA_NL21_cells$WGINI = gridded_distance_interpol(degree_grid, SA_NL21_round_pos$NL21, SA_NL21_s2, SA_NL21_cells_s2, 
+                                                thresh = 5000, step = 0.5, tol = 0.06, FUN = w_gini, w = SA_NL21_round_pos$pop, verbose = TRUE)
 
 fwrite(SA_NL21_cells, "data/SA_NL21_GINI_1km_hex_10km_radius.csv")
 
