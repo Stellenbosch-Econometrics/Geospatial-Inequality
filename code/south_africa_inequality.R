@@ -37,7 +37,8 @@ SA_WPOP %$% round_to_kms_fast(lon, lat, 0.7) %>% GRPN(FALSE) %>% descr()
 SA_RWI_round <- SA_RWI %>% ftransform(round_to_kms_exact(lon, lat, 2.1)) %>% 
   fgroup_by(lon, lat, sort = FALSE) %>% fselect(RWI) %>% fmean() %>% 
   merge(SA_WPOP %>% ftransform(round_to_kms_exact(lon, lat, 2.1)) %>% 
-          fgroup_by(lon, lat, sort = FALSE) %>% fsum(), by = .c(lon, lat))
+          fgroup_by(lon, lat, sort = FALSE) %>% fsum(), by = .c(lon, lat)) %>% 
+  fmutate(RWI = fmin(RWI, TRA = "-", set = TRUE) %+=% 1)
 
 SA_IWI_round <- SA_IWI %>% ftransform(round_to_kms_exact(lon, lat, 1.2)) %>% 
   fgroup_by(lon, lat, sort = FALSE) %>% fselect(IWI) %>% fmean() %>% 
@@ -79,7 +80,6 @@ settransform(SA_NL21_round, NL21_scaled = NL21^0.2749648)
 
 SA_RWI_ineq_10km_hex <- SA_RWI_round %>% 
   fsubset(GRPN(cell) > 5L) %>% 
-  fmutate(RWI = fmin(RWI, TRA = "-", set = TRUE) %+=% 1) %>% 
   fgroup_by(cell) %>% 
   fsummarise(N = GRPN(),
              pop = fsum(pop),
@@ -226,7 +226,7 @@ SA_IWI_cells = add_vars(qDT(dgSEQNUM_to_GEO(world_1km_hex, SA_IWI_cells)), cell 
 
 # Now calculating IWI based on S2 geometries...
 SA_IWI_s2 = SA_IWI_round %$% s2_lnglat(lon, lat)
-SA_IWI_cells_s2 = SA_IWI_cells %$% s2_lnglat(lon_deg, lat_deg)
+SA_IWI_cells_s2 = SA_IWI_cells %$% s2_lnglat(lon, lat)
 
 # This still takes quite long
 s2_distance(SA_IWI_s2, SA_IWI_cells_s2[[1]])
@@ -236,26 +236,26 @@ s2_distance(SA_IWI_s2, SA_IWI_cells_s2[[1]])
 #                                            lat = floor(min(lat)):ceiling(max(lat)))
 
 degree_grid = SA_IWI_round %$% expand.grid(lon = seq(floor(min(lon)), ceiling(max(lon)), 0.5),
-                                          lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
+                                           lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
 
 SA_IWI_cells$GINI = gridded_distance_interpol(degree_grid, SA_IWI_round$IWI, SA_IWI_s2, SA_IWI_cells_s2, 
-                                   thresh = 30000, step = 0.5, tol = 0.1, FUN = w_gini, verbose = TRUE)
+                                   thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, verbose = TRUE)
 
 SA_IWI_cells$WGINI = gridded_distance_interpol(degree_grid, SA_IWI_round$IWI, SA_IWI_s2, SA_IWI_cells_s2, 
-                                   thresh = 30000, step = 0.5, tol = 0.1, FUN = w_gini, w = SA_IWI_round$pop, verbose = TRUE)
+                                   thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, w = SA_IWI_round$pop, verbose = TRUE)
 
-fwrite(SA_IWI_cells, "data/SA_IWI_GINI_1km_hex_30km_radius.csv")
+fwrite(SA_IWI_cells, "data/SA_IWI_GINI_1km_hex_10km_radius.csv")
 
 
 # Same for RWI -------------------------------------------------------------------------------------------------------------------------
 system.time({
   SA_RWI_cells = SA_RWI_round %$% upsample_cells(world_1km_hex, lon, lat, 0.3, 50)
 })
-SA_RWI_cells = add_vars(qDT(dgSEQNUM_to_GEO(world_1km_hex, SA_RWI_cells)), cell = SA_RWI_cells, pos = "front")
+SA_RWI_cells = add_vars(qDT(dgSEQNUM_to_GEO(world_1km_hex, SA_RWI_cells)), cell = SA_RWI_cells, pos = "front") %>% rm_stub("_deg", FALSE)
 
 # Creating S2 geometries
 SA_RWI_s2 = SA_RWI_round %$% s2_lnglat(lon, lat)
-SA_RWI_cells_s2 = SA_RWI_cells %$% s2_lnglat(lon_deg, lat_deg)
+SA_RWI_cells_s2 = SA_RWI_cells %$% s2_lnglat(lon, lat)
 
 # This still takes quite long
 s2_distance(SA_RWI_s2, SA_RWI_cells_s2[[1]])
@@ -264,12 +264,12 @@ degree_grid = SA_RWI_round %$% expand.grid(lon = seq(floor(min(lon)), ceiling(ma
                                            lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
 
 SA_RWI_cells$GINI = gridded_distance_interpol(degree_grid, SA_RWI_round$RWI, SA_RWI_s2, SA_RWI_cells_s2, 
-                                              thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, verbose = TRUE)
+                                              thresh = 5000, step = 0.5, tol = 0.1, FUN = w_gini, verbose = TRUE)
 
 SA_RWI_cells$WGINI = gridded_distance_interpol(degree_grid, SA_RWI_round$RWI, SA_RWI_s2, SA_RWI_cells_s2, 
-                                               thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, w = SA_RWI_round$pop, verbose = TRUE)
+                                               thresh = 5000, step = 0.5, tol = 0.1, FUN = w_gini, w = SA_RWI_round$pop, verbose = TRUE)
 
-fwrite(SA_RWI_cells, "data/SA_RWI_GINI_1km_hex_10km_radius.csv")
+fwrite(SA_RWI_cells, "data/SA_RWI_GINI_1km_hex_5km_radius.csv")
 
 # Same for NL21 -------------------------------------------------------------------------------------------------------------------------
 SA_NL21_round_pos = SA_NL21_round %>% fsubset(NL21 > 0)
@@ -277,7 +277,7 @@ SA_NL21_round_pos = SA_NL21_round %>% fsubset(NL21 > 0)
 system.time({
   SA_NL21_cells = SA_NL21_round_pos %$% upsample_cells(world_1km_hex, lon, lat, 0.3, 10)
 })
-SA_NL21_cells = add_vars(qDT(dgSEQNUM_to_GEO(world_1km_hex, SA_NL21_cells)), cell = SA_NL21_cells, pos = "front")
+SA_NL21_cells = add_vars(qDT(dgSEQNUM_to_GEO(world_1km_hex, SA_NL21_cells)), cell = SA_NL21_cells, pos = "front") %>% rm_stub("_deg", FALSE)
 
 # # Restricting to Land area of south Africa: too low resolution
 # SA_shp_sf = st_read(dggridR::dg_shpfname_south_africa())
@@ -285,7 +285,7 @@ SA_NL21_cells = add_vars(qDT(dgSEQNUM_to_GEO(world_1km_hex, SA_NL21_cells)), cel
 
 # Creating S2 geometries
 SA_NL21_s2 = SA_NL21_round_pos %$% s2_lnglat(lon, lat)
-SA_NL21_cells_s2 = SA_NL21_cells %$% s2_lnglat(lon_deg, lat_deg)
+SA_NL21_cells_s2 = SA_NL21_cells %$% s2_lnglat(lon, lat)
 
 # This still takes quite long
 s2_distance(SA_NL21_s2, SA_NL21_cells_s2[[1]])
