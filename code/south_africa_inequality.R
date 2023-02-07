@@ -188,8 +188,9 @@ gridded_distance_interpol <- function(degree_grid, y, points_s2, cells_s2, FUN, 
   wnull = is.null(w)
   if(!wnull && length(w) != length(y)) stop("length(w) must match length(y)")
   
-  res = alloc(NA_real_, length(y))
   px = s2_x(points_s2); py = s2_y(points_s2); cx = s2_x(cells_s2); cy = s2_y(cells_s2)
+  res = alloc(NA_real_, length(cx))
+  
   
   for(d in mrtl(degrees)) {
     if(verbose) cat("lon =", d[1L], "lat =", d[2L], fill = TRUE)
@@ -294,10 +295,10 @@ degree_grid = SA_NL21_round_pos %$% expand.grid(lon = seq(floor(min(lon)), ceili
                                                 lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
 
 SA_NL21_cells$GINI = gridded_distance_interpol(degree_grid, SA_NL21_round_pos$NL21, SA_NL21_s2, SA_NL21_cells_s2, 
-                                               thresh = 5000, step = 0.5, tol = 0.06, FUN = w_gini, verbose = TRUE)
+                                               thresh = 10000, step = 0.5, tol = 0.06, FUN = w_gini, verbose = TRUE)
 
 SA_NL21_cells$WGINI = gridded_distance_interpol(degree_grid, SA_NL21_round_pos$NL21, SA_NL21_s2, SA_NL21_cells_s2, 
-                                                thresh = 5000, step = 0.5, tol = 0.06, FUN = w_gini, w = SA_NL21_round_pos$pop, verbose = TRUE)
+                                                thresh = 10000, step = 0.5, tol = 0.06, FUN = w_gini, w = SA_NL21_round_pos$pop, verbose = TRUE)
 
 fwrite(SA_NL21_cells, "data/SA_NL21_GINI_1km_hex_10km_radius.csv")
 
