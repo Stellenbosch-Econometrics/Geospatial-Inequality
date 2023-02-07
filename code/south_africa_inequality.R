@@ -23,9 +23,11 @@ SA_WPOP <- as.data.frame(WPOP, xy = TRUE) %>% qDT() %>%
 # Adding VIIRS Nightlights, 500m resolution, aggregate by factor 2 to 1km resolution
 # NL21MED <- terra::rast("/Users/sebastiankrantz/Documents/Data/VIIRS-DNB/VNL_v21_npp_2021_global_vcmslcfg_c202205302300.median_masked.dat.tif")
 # NL21MED %>% terra::crop(terra::ext(c(minlon, maxlon, minlat, maxlat)), filename = "data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked.dat.tif") 
+# SA_NL21[SA_NL21 <= 0] <- NA
+# terra::writeRaster(SA_NL21, "data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked_zerotoNA.dat.tif")
 SA_NL21 <- terra::rast("data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked.dat.tif") %>% 
-          terra::aggregate(fact = 2) %>% as.data.frame(xy = TRUE) %>% set_names(.c(lon, lat, NL21)) %>% 
-          fsubset(between(lon, minlon, maxlon) & between(lat, minlat, maxlat))
+           terra::aggregate(fact = 2) %>% as.data.frame(xy = TRUE) %>% set_names(.c(lon, lat, NL21)) %>% 
+           fsubset(between(lon, minlon, maxlon) & between(lat, minlat, maxlat))
 
 
 # Rounding and merging with population
