@@ -148,6 +148,7 @@ st_write(SA_ineq_10km_hex_all, "data/SA_ineq_10km_hex_all.gpkg")
 #
 # Now: Grid at 1km resolution ----------------------------------------------------------------
 #
+
 fastverse_extend(qs, dggridR, sf, s2)
 world_1km_hex <- dgconstruct(area = 1, metric = TRUE, resround = "nearest")
 # africa_10km_hex_sf %>% subset(cell %in% funique(c(SA_IWI_round$cell, SA_RWI_round$cell))) %>% 
@@ -266,12 +267,12 @@ degree_grid = SA_RWI_round %$% expand.grid(lon = seq(floor(min(lon)), ceiling(ma
                                            lat = seq(floor(min(lat)), ceiling(max(lat)), 0.5))
 
 SA_RWI_cells$GINI = gridded_distance_interpol(degree_grid, SA_RWI_round$RWI, SA_RWI_s2, SA_RWI_cells_s2, 
-                                              thresh = 5000, step = 0.5, tol = 0.1, FUN = w_gini, verbose = TRUE)
+                                              thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, verbose = TRUE)
 
 SA_RWI_cells$WGINI = gridded_distance_interpol(degree_grid, SA_RWI_round$RWI, SA_RWI_s2, SA_RWI_cells_s2, 
-                                               thresh = 5000, step = 0.5, tol = 0.1, FUN = w_gini, w = SA_RWI_round$pop, verbose = TRUE)
+                                               thresh = 10000, step = 0.5, tol = 0.1, FUN = w_gini, w = SA_RWI_round$pop, verbose = TRUE)
 
-fwrite(SA_RWI_cells, "data/SA_RWI_GINI_1km_hex_5km_radius.csv")
+fwrite(SA_RWI_cells, "data/SA_RWI_GINI_1km_hex_10km_radius.csv")
 
 # Same for NL21 -------------------------------------------------------------------------------------------------------------------------
 SA_NL21_round_pos = SA_NL21_round %>% fsubset(NL21 > 0)
@@ -302,5 +303,65 @@ SA_NL21_cells$WGINI = gridded_distance_interpol(degree_grid, SA_NL21_round_pos$N
                                                 thresh = 10000, step = 0.5, tol = 0.06, FUN = w_gini, w = SA_NL21_round_pos$pop, verbose = TRUE)
 
 fwrite(SA_NL21_cells, "data/SA_NL21_GINI_1km_hex_10km_radius.csv")
+
+
+
+
+# Comparison of Estimates ------------------------------------------------
+
+# 10km hex grid
+SA_ineq_10km_hex_all <- st_read("data/SA_ineq_10km_hex_all.gpkg")
+
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("pop") %>% pwcor()
+
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("mean") %>% gvr("w", invert = TRUE) %>% pwcor()
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_mean") %>% pwcor()
+
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("median") %>% gvr("w", invert = TRUE) %>% pwcor()
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_median") %>% pwcor()
+
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("GINI") %>% gvr("w", invert = TRUE) %>% pwcor()
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_GINI") %>% pwcor()
+
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("TI") %>% pwcor()
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("NHI") %>% pwcor()
+
+# 1km interpolations
+set_collapse(nthreads = 4, na.rm = TRUE)
+
+SA_1km_5km_radius <- fread("data/SA_IWI_GINI_1km_hex_5km_radius.csv") %>% add_stub("IWI_", cols = 4:5) %>% 
+  merge(fread("data/SA_RWI_GINI_1km_hex_5km_radius.csv") %>% slt(-lon_deg, -lat_deg) %>% add_stub("RWI_", cols = -1L), by = "cell") %>% 
+  merge(fread("data/SA_NL21_GINI_1km_hex_5km_radius.csv") %>% slt(-lon_deg, -lat_deg) %>% add_stub("NL_", cols = -1L), by = "cell") %>% 
+  ftransform(GINI_mean = psum(list(IWI_GINI, RWI_GINI, NL_GINI) %>% TRA(proportions(1/fmean(.)), "*")), 
+             WGINI_mean = psum(list(IWI_WGINI, RWI_WGINI, NL_WGINI) %>% TRA(proportions(1/fmean(.)), "*")))
+
+SA_1km_5km_radius %>% fwrite("data/SA_GINI_1km_hex_5km_radius.csv")
+
+SA_1km_5km_radius %>% gvr("_GINI|^GINI_") %>% pwcor()
+SA_1km_5km_radius %>% gvr("_WGINI|^WGINI_") %>% pwcor()
+
+
+SA_1km_10km_radius <- fread("data/SA_IWI_GINI_1km_hex_10km_radius.csv") %>% add_stub("IWI_", cols = 4:5) %>% 
+  merge(fread("data/SA_RWI_GINI_1km_hex_10km_radius.csv") %>% slt(-lon_deg, -lat_deg) %>% add_stub("RWI_", cols = -1L), by = "cell") %>% 
+  merge(fread("data/SA_NL21_GINI_1km_hex_10km_radius.csv") %>% slt(-lon_deg, -lat_deg) %>% add_stub("NL_", cols = -1L), by = "cell") %>% 
+  ftransform(GINI_mean = psum(list(IWI_GINI, RWI_GINI, NL_GINI) %>% TRA(proportions(1/fmean(.)), "*")), 
+             WGINI_mean = psum(list(IWI_WGINI, RWI_WGINI, NL_WGINI) %>% TRA(proportions(1/fmean(.)), "*")))
+
+SA_1km_10km_radius %>% fwrite("data/SA_GINI_1km_hex_10km_radius.csv")
+
+SA_1km_10km_radius %>% gvr("_GINI|^GINI_") %>% pwcor()
+SA_1km_10km_radius %>% gvr("_WGINI|^WGINI_") %>% pwcor()
+
+
+SA_1km_30km_radius <- fread("data/SA_IWI_GINI_1km_hex_30km_radius.csv") %>% add_stub("IWI_", cols = 4:5) %>% 
+  merge(fread("data/SA_RWI_GINI_1km_hex_30km_radius.csv") %>% slt(-lon, -lat) %>% add_stub("RWI_", cols = -1L), by = "cell") %>% 
+  merge(fread("data/SA_NL21_GINI_1km_hex_30km_radius.csv") %>% slt(-lon, -lat) %>% add_stub("NL_", cols = -1L), by = "cell") %>% 
+  ftransform(GINI_mean = psum(list(IWI_GINI, RWI_GINI, NL_GINI) %>% TRA(proportions(1/fmean(.)), "*")), 
+             WGINI_mean = psum(list(IWI_WGINI, RWI_WGINI, NL_WGINI) %>% TRA(proportions(1/fmean(.)), "*")))
+
+SA_1km_30km_radius %>% fwrite("data/SA_GINI_1km_hex_30km_radius.csv")
+
+SA_1km_30km_radius %>% gvr("_GINI|^GINI_") %>% pwcor()
+SA_1km_30km_radius %>% gvr("_WGINI|^WGINI_") %>% pwcor()
 
 
