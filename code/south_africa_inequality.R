@@ -23,8 +23,8 @@ SA_WPOP <- as.data.frame(WPOP, xy = TRUE) %>% qDT() %>%
 # Adding VIIRS Nightlights, 500m resolution, aggregate by factor 2 to 1km resolution
 # NL21MED <- terra::rast("/Users/sebastiankrantz/Documents/Data/VIIRS-DNB/VNL_v21_npp_2021_global_vcmslcfg_c202205302300.median_masked.dat.tif")
 # NL21MED %>% terra::crop(terra::ext(c(minlon, maxlon, minlat, maxlat)), filename = "data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked.dat.tif") 
-# SA_NL21[SA_NL21 <= 0] <- NA
-# terra::writeRaster(SA_NL21, "data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked_zerotoNA.dat.tif")
+# SA_NL21[SA_NL21 <= 0] <- NA # terra::subst(SA_NL21, c(Inf, -Inf), NA)
+# terra::writeRaster(SA_NL21^0.2749648, "data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked_zerotoNA_scaled.dat.tif")
 SA_NL21 <- terra::rast("data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked.dat.tif") %>% 
            terra::aggregate(fact = 2) %>% as.data.frame(xy = TRUE) %>% set_names(.c(lon, lat, NL21)) %>% 
            fsubset(between(lon, minlon, maxlon) & between(lat, minlat, maxlat))
@@ -326,6 +326,20 @@ SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_GINI") %>% pwcor()
 SA_ineq_10km_hex_all %>% qDT() %>% gvr("TI") %>% pwcor()
 SA_ineq_10km_hex_all %>% qDT() %>% gvr("NHI") %>% pwcor()
 
+# Combined estimates 
+settransform(SA_ineq_10km_hex_all, 
+  GINI_mean = psum(list(IWI_GINI, RWI_GINI, NL21_GINI) %>% TRA(proportions(1/fmean(.)), "*")),
+  WGINI_mean = psum(list(IWI_w_GINI, RWI_w_GINI, NL21_w_GINI) %>% TRA(proportions(1/fmean(.)), "*")),
+  TI_mean = psum(list(IWI_TI, RWI_TI, NL21_TI) %>% TRA(proportions(1/fmean(.)), "*")),
+  HI_mean = psum(list(IWI_HI, RWI_HI, NL21_HI) %>% TRA(proportions(1/fmean(.)), "*")),
+  NHI_mean = psum(list(IWI_NHI, RWI_NHI, NL21_NHI) %>% TRA(proportions(1/fmean(.)), "*"))
+)
+
+SA_ineq_10km_hex_all %>% st_write("data/SA_ineq_10km_hex_all.gpkg")
+
+SA_ineq_10km_hex_all %>% qDT() %>% fselect(GINI_mean, WGINI_mean, TI_mean, HI_mean, NHI_mean) %>% pwcor()
+
+
 # 1km interpolations
 set_collapse(nthreads = 4, na.rm = TRUE)
 
@@ -339,6 +353,7 @@ SA_1km_5km_radius %>% fwrite("data/SA_GINI_1km_hex_5km_radius.csv")
 
 SA_1km_5km_radius %>% gvr("_GINI|^GINI_") %>% pwcor()
 SA_1km_5km_radius %>% gvr("_WGINI|^WGINI_") %>% pwcor()
+SA_1km_5km_radius %>% gvr("_mean") %>% pwcor()
 
 
 SA_1km_10km_radius <- fread("data/SA_IWI_GINI_1km_hex_10km_radius.csv") %>% add_stub("IWI_", cols = 4:5) %>% 
@@ -351,6 +366,7 @@ SA_1km_10km_radius %>% fwrite("data/SA_GINI_1km_hex_10km_radius.csv")
 
 SA_1km_10km_radius %>% gvr("_GINI|^GINI_") %>% pwcor()
 SA_1km_10km_radius %>% gvr("_WGINI|^WGINI_") %>% pwcor()
+SA_1km_10km_radius %>% gvr("_mean") %>% pwcor()
 
 
 SA_1km_30km_radius <- fread("data/SA_IWI_GINI_1km_hex_30km_radius.csv") %>% add_stub("IWI_", cols = 4:5) %>% 
@@ -363,5 +379,6 @@ SA_1km_30km_radius %>% fwrite("data/SA_GINI_1km_hex_30km_radius.csv")
 
 SA_1km_30km_radius %>% gvr("_GINI|^GINI_") %>% pwcor()
 SA_1km_30km_radius %>% gvr("_WGINI|^WGINI_") %>% pwcor()
+SA_1km_30km_radius %>% gvr("_mean") %>% pwcor()
 
 
