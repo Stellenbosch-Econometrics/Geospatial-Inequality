@@ -209,4 +209,4 @@ mv_res <- optim(rep(1.1, length(kappa)), objective,
              upper = rep(100, length(kappa)), 
              method = "L-BFGS-B")
 
-  
+  # -> No convergence !! (127 iterations, then: NORM OF PROJECTED GRADIENT <= PGTOL)
