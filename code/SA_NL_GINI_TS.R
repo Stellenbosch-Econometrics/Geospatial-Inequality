@@ -1,0 +1,212 @@
+###########################################
+# South Africa Nightlights GINI Time Series
+###########################################
+
+library(fastverse)
+set_collapse(nthreads = 4, na.rm = FALSE, sort = FALSE)
+source("code/gini_helper.R")
+source("/Users/sebastiankrantz/Documents/IFW Kiel/Africa-Infrastructure/code/osm_helpers.R")
+
+nl_annual_path <- "data/south_africa_viirs_dnb_nightlights_v1_vcmslcfg_annual_median_composite"
+nl_files <- list.files(nl_annual_path)
+
+nl_data <- nl_files %>% set_names(substr(., 1, 4)) %>% 
+  lapply(function(x) paste0(nl_annual_path, "/", x) %>% 
+           terra::rast() %>% 
+           terra::as.data.frame(xy = TRUE) %>% 
+           fsubset(avg_rad %!=% -9999)) %>% 
+  unlist2d("year", id.factor = TRUE, DT = TRUE) %>%
+  frename(x = lon, y = lat) %>% 
+  fmutate(year = as.integer(levels(year))[year])
+
+# What population to measure? Daytime or nighttime?
+pop_path <- "data/WPOP_SA_1km_UNadj"
+pop_files <- list.files(pop_path)
+
+pop_data <- pop_files %>% set_names(substr(., 9, 12)) %>% 
+  lapply(function(x) paste0(pop_path, "/", x) %>% 
+           terra::rast() %>% 
+           terra::as.data.frame(xy = TRUE) %>% 
+           set_names(c("lon", "lat", "pop"))) %>% 
+  unlist2d("year", id.factor = TRUE, DT = TRUE) %>% 
+  fmutate(year = as.integer(levels(year))[year])
+
+# Checks for Spatial Matching
+
+pop_data %>% fselect(year, lat, lon) %>% any_duplicated()
+nl_data %>% fselect(year, lat, lon) %>% any_duplicated()
+
+pop_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
+  fselect(year, lat, lon) %>% any_duplicated()
+
+nl_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
+  fselect(year, lat, lon) %>% fduplicated() %>% qtable()
+
+# Forecasting Population 
+
+pop_data %<>% ftransform(round_to_kms_fast(lon, lat, 0.63))
+
+pop_forecast <- pop_data %>% 
+  roworder(year) %>% 
+  fgroup_by(lat, lon) %>% 
+  fmutate(dm_year = fwithin(year)) %>% 
+  fsummarise(pop_2020 = flast(pop),
+             beta = fsum(pop, dm_year) %/=% fsum(dm_year^2)) %>% 
+  fmutate(pop_2021 = pop_2020 + beta, 
+          pop_2022 = pop_2021 + beta) %>% 
+  fselect(-beta) 
+
+head(pop_forecast)
+# COVID cause migration into big cities and out of rural cities...
+
+pop_data_forecast <- rbind(pop_data,
+  pop_forecast %>% fselect(-pop_2020) %>% rm_stub("pop_") %>% 
+  melt(1:2, variable.name = "year", value.name = "pop") %>% 
+  fmutate(year = as.integer(levels(year))[year]) %>% 
+  colorder(year))
+
+# Spatial Matching
+nl_pop_data <- pop_data_forecast %>% 
+  merge(nl_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
+         fgroup_by(year, lat, lon) %>% fmean(), by = .c(year, lat, lon)) %>% 
+  roworder(year, lat, lon)
+
+qsu(nl_pop_data)
+rm(pop_data, pop_forecast, pop_data_forecast, nl_data)
+gc()
+
+qs::qsave(nl_pop_data, "data/sa_nl_pop_ts_data.qs")
+
+#
+### Now GINI Calculations -------------------------------
+#
+
+nl_pop_data <- qs::qread("data/sa_nl_pop_ts_data.qs")
+
+set_collapse(sort = TRUE)
+
+raw_gini_ts <- nl_pop_data %>% 
+  fsubset(pop > 0 & avg_rad > 0) %>%
+  # ftransformv(c(pop, avg_rad), fmin, TRA = "-") %>%
+  fgroup_by(year) %>% 
+  fsummarise(gini = gini_noss(avg_rad)*100, 
+             w_gini = w_gini(avg_rad, pop)*100) %$% 
+  ts(cbind(gini, w_gini), start = year[1])
+
+plot(raw_gini_ts)
+
+#
+### Inequality Estimates --------------------------------
+#
+
+# World Inequality Database: Only has wealth based inequality for SA
+SA_WID <- fread("data/SA_GINI/WID/WID_Data_04042023-092659.csv", header = FALSE) %>% 
+          get_vars(varying(.)) %>% set_names(.c(label, year, value)) %>% 
+          ftransform(tstrsplit(label, "\n", fixed = TRUE, names = c("series", "measure", "label"))) %>% 
+          ftransform(tstrsplit(label, " | ", fixed = TRUE, names = c("pop", "var", "label", "split"))) %>% 
+          dapply(trimws) %>% colorder(series, measure, split, year, value) %>% 
+          ftransform(value = as.numeric(value), 
+                     year = as.integer(year)) %>% 
+          fsubset(is.finite(value)) %>% get_vars(varying(.)) %>% fmutate(value = value * 100)
+
+# Income based: 0.75 since 2014. Available on the website but not in the downloaded data...
+library(ggplot2) # Problem: Wealth based GINI above 1? -> Possible with negative wealth....
+SA_WID %>% ggplot(aes(x = year, y = value, colour = split)) + geom_line() + scale_y_continuous(limits = c(50, 110))
+
+# World Bank Estimate
+SA_WB <- africamonitor::am_data(series = "SI_POV_GINI", ctry = "ZAF") 
+SA_WB %>% ggplot(aes(x = Date, y = SI_POV_GINI)) + geom_line() + scale_y_continuous(limits = c(50, 110))
+
+# Standardized World Inequality Database: Gini based on disposable and Market Income
+SA_SWID <- fread("data/SA_GINI/SWID/swiid9_4/swiid9_4_summary.csv") %>% 
+           fsubset(country == "South Africa", year, gini_disp, gini_mkt) 
+
+SA_SWID %>% melt("year") %>% ggplot(aes(x = year, y = value, colour = variable)) + geom_line() + 
+  scale_y_continuous(limits = c(50, 110))
+# -> Development economists don't believe SWID
+
+
+# Geospatial GINI: Galimberti et al. (2020)
+NL_GINI <- readxl::read_xlsx("data/GeospatialGinisData.xlsx", sheet = "Data") %>% qDT() %>% 
+  fsubset(ISO == "ZAF", year = Year, wGini_L050) %>% fmutate(wGini_L050 = wGini_L050 * 100)
+# Use SWIID after-tax income Gini-coefficients as a reference (Solt, 2016).
+
+NL_GINI %>% ggplot(aes(x = year, y = wGini_L050)) + geom_line()
+
+# All combined
+SA_GINI_ALL <- SA_WID %>% fselect(series, year, value) %>%
+  rbind(SA_WB %>% fcompute(year = year(Date), series = "SI_POV_GINI", value = SI_POV_GINI)) %>% 
+  rbind(SA_SWID %>% melt("year", variable.name = "series")) %>% 
+  rbind(NL_GINI %>% fcompute(year = year, series = "wGini_L050", value = wGini_L050)) 
+  
+
+SA_GINI_ALL %>% ggplot(aes(x = year, y = value, colour = series)) + geom_line() # + scale_y_continuous(limits = c(50, 110))
+
+SA_GINI_ALL %>% dcast(year ~ series) %>% pwcor()
+  
+#
+### Optimization with Single kappa Objective ----------------------------
+#
+
+swid_gini <- SA_SWID[between(year, 2014, 2022)]
+print(swid_gini)
+np_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year == 2014, # year %in% swid_gini$year, 
+                                           year, pop, avg_rad) # %>% fgroup_by(year)
+
+nl_pop_data %>% 
+  fgroup_by(nl_g0 = avg_rad > 0) %>% fselect(pop) %>% fsum()
+
+pwcor(np_pop_data_pos)
+
+objective <- function(k) {
+    np_pop_data_pos %>% 
+      fsummarise(nl_gini = w_gini(avg_rad^k, pop)*100) %$%
+      # merge(swid_gini, by = "year") %$% 
+      mean(abs(63 - nl_gini))
+}
+
+result <- optimize(objective, c(0.01, 100))
+# gini_disp: k = 1.334723, objective = 0.3401935
+# gini_mkt: k = 1.822889, objective = 0.3002254
+
+k <- 1.321563
+
+sk_gini_res <- nl_pop_data %>% 
+  fsubset(pop > 0 & avg_rad > 0) %>%
+  fgroup_by(year) %>% 
+  fsummarise(gini = gini_noss(avg_rad^k)*100, 
+             w_gini = w_gini(avg_rad^k, pop)*100) 
+
+sk_gini_res %$% ts(cbind(gini, w_gini), start = year[1]) %>% plot()
+
+sk_gini_res %>% 
+  merge(SA_WB %>% fcompute(year = year(Date), wb_gini = SI_POV_GINI), by = "year", all = TRUE) %>% 
+  melt("year", na.rm = TRUE) %>% 
+  ggplot(aes(x = year, y = value, colour = variable)) + 
+      geom_line() + scale_y_continuous(limits = c(50,100))
+
+
+#
+### Optimization with Multiple Kappa Objective ----------------------------
+#
+
+# Different powers as in the paper
+kappa <- c(0.1, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0)
+
+nl_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year %in% swid_gini$year) %>% fgroup_by(year) 
+attr(nl_pop_data_pos, "kappa_mat") <- lapply(as.list(kappa), \(k) nl_pop_data_pos$avg_rad^k) %>% set_names(paste0("avg_rad_", kappa)) %>% qM()
+
+objective <- function(kvec) {
+  nl_pop_data_pos %>% 
+    ftransform(avg_rad_w = attr(., "kappa_mat") %*% kvec) %>%
+    fsummarise(nl_gini = w_gini(avg_rad_w, pop)*100) %>% qDT() %>%
+    merge(swid_gini, by = "year") %$% 
+    mean(abs(gini_disp - nl_gini))
+}
+
+mv_res <- optim(rep(1.1, length(kappa)), objective, 
+             lower = rep(0.01, length(kappa)), 
+             upper = rep(100, length(kappa)), 
+             method = "L-BFGS-B")
+
+  
