@@ -53,8 +53,8 @@ pop_forecast <- pop_data %>%
   fsummarise(pop_2020 = flast(pop),
              beta = fsum(pop, dm_year) %/=% fsum(dm_year^2)) %>% 
   fmutate(pop_2021 = pop_2020 + beta, 
-          pop_2022 = pop_2021 + beta) %>% 
-  fselect(-beta) 
+          pop_2022 = pop_2021 + beta, 
+          beta = NULL)
 
 head(pop_forecast)
 # COVID cause migration into big cities and out of rural cities...
