@@ -64,5 +64,28 @@ H7_grid_all <- UberH7_centroids %>% ftransform(round_to_kms_exact(lon, lat, 1.8)
   na_omit(cols = -(1:3), prop = 1) %>% roworder(hex7)
 
 # Exploring the grid
-H7_grid_all %>% fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% pwcor()
 
+H7_grid_all %>% 
+  fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% pwcor(P = TRUE)
+
+H7_grid_all %>% 
+  fmutate(lat_lon_int = finteraction(as.integer(lat), as.integer(lon))) %>% 
+  fcomputev(c(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020), 
+            fwithin, lat_lon_int, na.rm = TRUE) %>% 
+  pwcor(P = TRUE)
+
+
+# Now also getting municipal geometry
+MunGeo <- st_read("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Shapefiles/MDB_Local_Municipal_Boundary_2018")
+IWI_mun <- SA_IWI %>% st_as_sf(coords = c("lon", "lat"), crs = 4326) %>% num_vars() %>% aggregate(MunGeo, mean) 
+RWI_mun <- SA_RWI %>% st_as_sf(coords = c("lon", "lat"), crs = 4326) %>% num_vars() %>% aggregate(MunGeo, mean) 
+NL20_mun <- SA_NL20 %>% st_as_sf(coords = c("lon", "lat"), crs = 4326) %>% num_vars() %>% aggregate(MunGeo, mean) 
+
+all_identical(IWI_mun$geometry, RWI_mun$geometry, NL20_mun$geometry, MunGeo$geometry)
+
+MunGeo_data <- MunGeo %>% 
+  add_vars(nv(unclass(IWI_mun)), nv(unclass(RWI_mun)), nv(unclass(NL20_mun)), 
+           sbt(MUN_wide, ckmatch(MunGeo$CAT_B, CAT_B), -1L))
+
+MunGeo_data %>% qDT() %>% 
+  fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% pwcor(P = TRUE)
