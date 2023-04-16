@@ -99,19 +99,13 @@ plot(raw_gini_ts)
 ### Inequality Estimates --------------------------------
 #
 
-# World Inequality Database: Only has wealth based inequality for SA
-SA_WID <- fread("data/SA_GINI/WID/WID_Data_04042023-092659.csv", header = FALSE) %>% 
-          get_vars(varying(.)) %>% set_names(.c(label, year, value)) %>% 
-          ftransform(tstrsplit(label, "\n", fixed = TRUE, names = c("series", "measure", "label"))) %>% 
-          ftransform(tstrsplit(label, " | ", fixed = TRUE, names = c("pop", "var", "label", "split"))) %>% 
-          dapply(trimws) %>% colorder(series, measure, split, year, value) %>% 
-          ftransform(value = as.numeric(value), 
-                     year = as.integer(year)) %>% 
-          fsubset(is.finite(value)) %>% get_vars(varying(.)) %>% fmutate(value = value * 100)
+# World Inequality Database
+SA_WID <- fread("data/SA_GINI/WID/WID_SA_GINI.csv") %T>% with(value %*=% 100)
 
 # Income based: 0.75 since 2014. Available on the website but not in the downloaded data...
 library(ggplot2) # Problem: Wealth based GINI above 1? -> Possible with negative wealth....
-SA_WID %>% ggplot(aes(x = year, y = value, colour = split)) + geom_line() + scale_y_continuous(limits = c(50, 110))
+SA_WID %>% ggplot(aes(x = year, y = value, colour = variable)) + geom_line() + 
+  scale_y_continuous(limits = c(50, 110))
 
 # World Bank Estimate
 SA_WB <- africamonitor::am_data(series = "SI_POV_GINI", ctry = "ZAF") 
@@ -133,14 +127,56 @@ NL_GINI <- readxl::read_xlsx("data/GeospatialGinisData.xlsx", sheet = "Data") %>
 
 NL_GINI %>% ggplot(aes(x = year, y = wGini_L050)) + geom_line()
 
+# Spatial Tax Panel
+STP_MUN <- fread("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Data/Municipal_MedianIncome.csv") %>% fselect(-FTE) %>% 
+  merge(fread("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Data/Municipal_Gini.csv"), by = .c(CAT_B, TaxYear)) %>% 
+  fmutate(FTE = as.double(FTE))
+
+STP_MUN %>% 
+  ggplot(aes(x = TaxYear, y = gini, group = CAT_B)) + 
+         geom_line() + guides(group = "none")
+
+STP_GINI <- STP_MUN %>% 
+            fgroup_by(year = TaxYear) %>% 
+            fsummarise(gini_between_mun = gini_wiki(MedianIncome)*100,
+                       w_gini_between_mun = w_gini(MedianIncome, FTE)*100, 
+                       gini_within_mun = fmean(gini)*100,
+                       w_gini_within_mun = fmean(gini, FTE)*100, 
+                       FTE = fsum(FTE), 
+                       N = GRPN())            # fmutate(w_gini_adj = w_gini * (2 * FTE) / (N - 1))
+
+STP_GINI %>% gvr("year|gini") %>% melt("year") %>% 
+  ggplot(aes(x = year, y = value, colour = variable)) + geom_line() +
+  scale_y_continuous(n.breaks = 10) +
+  scale_x_continuous(n.breaks = 10) +
+  scale_color_brewer(palette = "Paired") +
+  theme_bw(base_size = 14) + 
+  ggtitle("STP3: GINI Between and Within 213 SA Municipalities")
+
+dev.copy(pdf, "figures/STP3_SA_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
+dev.off()
+
+
 # All combined
-SA_GINI_ALL <- SA_WID %>% fselect(series, year, value) %>%
-  rbind(SA_WB %>% fcompute(year = year(Date), series = "SI_POV_GINI", value = SI_POV_GINI)) %>% 
-  rbind(SA_SWID %>% melt("year", variable.name = "series")) %>% 
-  rbind(NL_GINI %>% fcompute(year = year, series = "wGini_L050", value = wGini_L050)) 
+SA_GINI_ALL <- SA_WID %>% fselect(series = variable, year, value) %>% mtt(series = paste("WID:", series)) %>% 
+  rbind(SA_WB %>% fcompute(year = year(Date), series = "WB: SI_POV_GINI", value = SI_POV_GINI)) %>% 
+  rbind(SA_SWID %>% melt("year", variable.name = "series") %>% mtt(series = paste("SWID:", series))) %>% 
+  rbind(NL_GINI %>% fcompute(year = year, series = "DMSP-OLS: wGini_L050", value = wGini_L050)) %>% 
+  rbind(STP_GINI %>% gvr("year|gini_within") %>% melt("year", variable.name = "series") %>% mtt(series = paste("STP3:", series)))
   
 
-SA_GINI_ALL %>% ggplot(aes(x = year, y = value, colour = series)) + geom_line() # + scale_y_continuous(limits = c(50, 110))
+SA_GINI_ALL %>% 
+  fsubset(year > 1990) %>% 
+  frename(tools::toTitleCase) %>% 
+  ggplot(aes(x = Year, y = Value, colour = Series)) + geom_line() + 
+  scale_y_continuous(n.breaks = 10) +
+  scale_x_continuous(n.breaks = 10) +
+  # scale_color_brewer(palette = "Set1") +
+  theme_bw(base_size = 14) + 
+  ggtitle("Different GINI Time Series for South Africa")
+
+dev.copy(pdf, "figures/SA_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
+dev.off()
 
 SA_GINI_ALL %>% dcast(year ~ series) %>% pwcor()
   
