@@ -66,14 +66,19 @@ H7_grid_all <- UberH7_centroids %>% ftransform(round_to_kms_exact(lon, lat, 1.8)
 # Exploring the grid
 
 H7_grid_all %>% 
-  fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% pwcor(P = TRUE)
+  fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% 
+  pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
 
 H7_grid_all %>% 
   fmutate(lat_lon_int = finteraction(as.integer(lat), as.integer(lon))) %>% 
   fcomputev(c(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020), 
-            fwithin, lat_lon_int, na.rm = TRUE) %>% 
-  pwcor(P = TRUE)
+            fscale, lat_lon_int, na.rm = TRUE) %>% 
+  pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
 
+H7_grid_all %>% 
+  fcomputev(c(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020), 
+            fscale, CAT_B, na.rm = TRUE) %>% 
+  pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
 
 # Now also getting municipal geometry
 MunGeo <- st_read("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Shapefiles/MDB_Local_Municipal_Boundary_2018")
@@ -88,4 +93,12 @@ MunGeo_data <- MunGeo %>%
            sbt(MUN_wide, ckmatch(MunGeo$CAT_B, CAT_B), -1L))
 
 MunGeo_data %>% qDT() %>% 
-  fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% pwcor(P = TRUE)
+  fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% 
+  pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
+
+# Matching municipalities and Uber Hexagons
+tmp = st_contains(MunGeo, st_centroid(UberH7))
+UberH7_centroids$CAT_B <- NA_character_
+for(i in seq_along(tmp)) setv(UberH7_centroids$CAT_B, tmp[[i]], MunGeo$CAT_B[i], vind1 = TRUE)
+# Now regenerate H7_grid_all
+
