@@ -85,15 +85,27 @@ nl_pop_data <- qs::qread("data/sa_nl_pop_ts_data.qs")
 
 set_collapse(sort = TRUE)
 
-raw_gini_ts <- nl_pop_data %>% 
+raw_gini <- nl_pop_data %>% 
   fsubset(pop > 0 & avg_rad > 0) %>%
   # ftransformv(c(pop, avg_rad), fmin, TRA = "-") %>%
   fgroup_by(year) %>% 
   fsummarise(gini = gini_noss(avg_rad)*100, 
-             w_gini = w_gini(avg_rad, pop)*100) %$% 
-  ts(cbind(gini, w_gini), start = year[1])
+             w_gini = w_gini(avg_rad, pop)*100) 
 
-plot(raw_gini_ts)
+# raw_gini %$% ts(cbind(gini, w_gini), start = year[1]) %>% plot()
+
+library(ggplot2)
+raw_gini %>% melt("year") %>% 
+  frename(year = Year, value = Value, variable = Series) %>% 
+  ggplot(aes(x = Year, y = Value, colour = Series)) + geom_line() +
+  scale_y_continuous(n.breaks = 10) +
+  scale_x_continuous(n.breaks = 10) +
+  scale_color_brewer(palette = "Paired") +
+  theme_bw(base_size = 14) + 
+  ggtitle("Uncalibrated VIIRS-DNB Nightlights Based GINI Estimates")
+
+dev.copy(pdf, "figures/Raw_VIIRS_SA_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
+dev.off()
 
 #
 ### Inequality Estimates --------------------------------
@@ -132,10 +144,6 @@ STP_MUN <- fread("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Data/Municipal_Med
   merge(fread("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Data/Municipal_Gini.csv"), by = .c(CAT_B, TaxYear)) %>% 
   fmutate(FTE = as.double(FTE))
 
-STP_MUN %>% 
-  ggplot(aes(x = TaxYear, y = gini, group = CAT_B)) + 
-         geom_line() + guides(group = "none")
-
 STP_GINI <- STP_MUN %>% 
             fgroup_by(year = TaxYear) %>% 
             fsummarise(gini_between_mun = gini_wiki(MedianIncome)*100,
@@ -144,6 +152,21 @@ STP_GINI <- STP_MUN %>%
                        w_gini_within_mun = fmean(gini, FTE)*100, 
                        FTE = fsum(FTE), 
                        N = GRPN())            # fmutate(w_gini_adj = w_gini * (2 * FTE) / (N - 1))
+
+STP_MUN %>% 
+  fmutate(gini = gini * 100) %>% 
+  ggplot(aes(x = TaxYear, y = gini, group = CAT_B, alpha = I(0.5))) + 
+  geom_line() + guides(group = "none") +
+  geom_line(aes(x = year, y = value, colour = Series), size = 1, alpha = I(1), inherit.aes = FALSE, 
+            data = STP_GINI %>% gvr("year|within") %>% rm_stub("_within_mun", FALSE) %>% 
+              melt("year", variable.name = "Series")) +
+  scale_y_continuous(n.breaks = 10) +
+  scale_x_continuous(n.breaks = 10) +
+  theme_bw(base_size = 14) + ylab("GINI") +
+  ggtitle("STP3: GINI in 213 South African Municipalities")
+
+dev.copy(pdf, "figures/STP3_SA_MUN_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
+dev.off()
 
 STP_GINI %>% gvr("year|gini") %>% melt("year") %>% 
   ggplot(aes(x = year, y = value, colour = variable)) + geom_line() +
@@ -184,8 +207,8 @@ SA_GINI_ALL %>% dcast(year ~ series) %>% pwcor()
 ### Optimization with Single kappa Objective ----------------------------
 #
 
-swid_gini <- SA_SWID[between(year, 2014, 2022)]
-print(swid_gini)
+# swid_gini <- SA_SWID[between(year, 2014, 2022)]
+# print(swid_gini)
 np_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year == 2014, # year %in% swid_gini$year, 
                                            year, pop, avg_rad) # %>% fgroup_by(year)
 
@@ -205,7 +228,7 @@ result <- optimize(objective, c(0.01, 100))
 # gini_disp: k = 1.334723, objective = 0.3401935
 # gini_mkt: k = 1.822889, objective = 0.3002254
 
-k <- 1.321563
+k <- 1.308966
 
 sk_gini_res <- nl_pop_data %>% 
   fsubset(pop > 0 & avg_rad > 0) %>%
@@ -216,11 +239,82 @@ sk_gini_res <- nl_pop_data %>%
 sk_gini_res %$% ts(cbind(gini, w_gini), start = year[1]) %>% plot()
 
 sk_gini_res %>% 
+  fselect(-gini) %>% 
   merge(SA_WB %>% fcompute(year = year(Date), wb_gini = SI_POV_GINI), by = "year", all = TRUE) %>% 
   melt("year", na.rm = TRUE) %>% 
-  ggplot(aes(x = year, y = value, colour = variable)) + 
-      geom_line() + scale_y_continuous(limits = c(50,100))
+  frename(year = Year, value = Value, variable = Series) %>% 
+  ggplot(aes(x = Year, y = Value, colour = Series)) + 
+      geom_line() + 
+      scale_y_continuous(limits = c(50,70), n.breaks = 10) +
+      scale_x_continuous(n.breaks = 10) +
+      scale_color_brewer(palette = "Set1") +
+      theme_bw(base_size = 14) + 
+      ggtitle("Calibrated (World Bank 2014) VIIRS-DNB Nightlights GINI Estimate")
 
+dev.copy(pdf, "figures/WB_VIIRS_SA_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
+dev.off()
+
+
+#
+### Computing Municipal GINIs ----------------------------
+#
+
+fastverse_extend(sf)
+MunGeo <- st_read("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Shapefiles/MDB_Local_Municipal_Boundary_2018")
+nl_pop_sf <- nl_pop_data %>% st_as_sf(coords = c("lon", "lat"), crs = 4326)
+system.time(ind <- st_contains(MunGeo, nl_pop_sf))
+rm(nl_pop_sf); gc()
+
+nl_pop_data$CAT_B <- NA_character_
+for(i in seq_along(ind)) setv(nl_pop_data$CAT_B, ind[[i]], MunGeo$CAT_B[i], vind1 = TRUE)
+
+wb_nl_gini_mun <- nl_pop_data %>% 
+  fsubset(pop > 0 & avg_rad > 0 & !is.na(CAT_B)) %>% 
+  fgroup_by(CAT_B, year) %>% 
+  fsummarise(avg_rad = fmean(avg_rad),
+             pop = fmean(pop),
+             nl_gini = gini_noss(avg_rad^k)*100, 
+             nl_w_gini = w_gini(avg_rad^k, pop)*100) 
+
+STP_MUN_NL <- STP_MUN %>% rnm(TaxYear = year) %>% 
+  merge(wb_nl_gini_mun, by = .c(CAT_B, year)) %>% 
+  colorder(FTE, pop, avg_rad, pos = "after")
+
+# Cross-sectional correlation
+STP_MUN_NL %>% collap(~ CAT_B, na.rm = TRUE) %>% 
+  fselect(med_inc = MedianIncome, FTE:nl_w_gini) %>% 
+  pwcor() %>% print(digits = 3, show = "lower.tri") 
+
+# Within-correlations
+STP_MUN_NL %>% STD(~ CAT_B, na.rm = TRUE, stub = FALSE) %>% 
+  fselect(med_inc = MedianIncome, FTE:nl_w_gini) %>% 
+  pwcor() %>% print(digits = 3, show = "lower.tri") 
+
+# All correlations: export
+STP_MUN_NL %>% 
+  list(Overall = .,
+       Between = collap(., ~ CAT_B, na.rm = TRUE), 
+       Within = STD(., ~ CAT_B, na.rm = TRUE, stub = FALSE)) %>% 
+  lapply(fselect, med_inc = MedianIncome, FTE:nl_w_gini) %>% 
+  lapply(. %>% pwcor(P = TRUE) %>% print(digits = 3, return = TRUE, show = "lower.tri")) %>% 
+  unlist2d("Trans", "Variable") %>% 
+  roworderv(neworder = with(., radixorder(group(Variable)))) %>% 
+  xtable::xtable() %>% print(booktabs = TRUE, include.rownames = FALSE)
+
+
+STP_MUN_NL %>% 
+  ggplot(aes(x = year, y = nl_w_gini, group = CAT_B, alpha = I(0.5))) + 
+  geom_line() + guides(group = "none") +
+  geom_line(aes(x = year, y = value, colour = Series), size = 1, alpha = I(1), inherit.aes = FALSE,
+            data = STP_MUN_NL %>% gby(year) %>% smr(gini = fmean(nl_w_gini), w_gini = fmean(nl_w_gini, pop)) %>% 
+              melt("year", variable.name = "Series")) +
+  scale_y_continuous(n.breaks = 10) +
+  scale_x_continuous(n.breaks = 10) +
+  theme_bw(base_size = 14) + ylab("GINI") +
+  ggtitle("VIIRS-DNB: GINI in 213 South African Municipalities")
+
+dev.copy(pdf, "figures/WB_VIIRS_SA_MUN_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
+dev.off()
 
 #
 ### Optimization with Multiple Kappa Objective ----------------------------
