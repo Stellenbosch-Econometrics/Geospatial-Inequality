@@ -1,0 +1,415 @@
+\documentclass[compress,xcolor=dvipsnames]{beamer}
+\useoutertheme[subsection=false]{miniframes}  % footline=empty,
+\setbeamercolor{mini frame}{fg=NavyBlue,bg=NavyBlue} % https://tex.stackexchange.com/questions/228256/control-colors-and-shading-of-navigation-circles-in-beamer-top-line
+\setbeamerfont{headline}{size=\tiny} % Headline font size
+\useinnertheme{circles}% http://blogs.ubc.ca/khead/research/research-advice/better-beamer-presentations
+\setbeamercolor{section number projected}{bg=Red,fg=white} % https://tex.stackexchange.com/questions/8011/changing-color-and-bullets-in-beamers-table-of-contents
+\setbeamertemplate{navigation symbols}{} % Swith off naviagation symbols: https://nickhigham.wordpress.com/2013/01/18/top-5-beamer-tips/
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+% https://tex.stackexchange.com/questions/44983/beamer-removing-headline-and-its-space-on-a-single-frame-for-plan-but-keepin :
+\makeatletter
+\newenvironment{noheadline}{
+    \setbeamertemplate{headline}{}
+    \addtobeamertemplate{frametitle}{\vspace*{-0.9\baselineskip}}{}
+}{}
+\makeatother
+
+\mode<presentation> {
+\setbeamertemplate{caption}[numbeNavyBlue]
+\setbeamercolor{frametitle}{fg=NavyBlue!140}
+\setbeamercolor{title}{fg=Cerulean}
+\setbeamercolor{normal text}{fg=black!85}
+\setbeamercolor{enumerate item}{fg=NavyBlue!140}
+\setbeamercolor{enumerate subitem}{fg=NavyBlue!140}
+\setbeamercolor{enumerate subsubitem}{fg=NavyBlue!140}
+\setbeamercolor{caption name}{fg=NavyBlue}
+\setbeamercolor{itemize item}{fg=NavyBlue!140}
+\setbeamercolor{itemize subitem}{fg=NavyBlue!140}
+\setbeamercolor{itemize subsubitem}{fg=NavyBlue!140}
+\setbeamercolor{section in toc}{fg=NavyBlue!140}
+\setbeamercolor{subsection in toc}{fg=NavyBlue!120}
+\setbeamercolor{footlinecolor0}{fg=white,bg=NavyBlue!140}
+\setbeamercolor{footlinecolor1}{fg=white,bg=NavyBlue}
+\setbeamercolor{footlinecolor2}{fg=black,bg=NavyBlue!60}
+\setbeamertemplate{footline}
+%\includepackage[tab]{beamerthemeclassic}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.25ex,dp=1ex,center]{footlinecolor0}
+  Sebastian Krantz %\insertsectionhead
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.25ex,dp=1ex,center]{footlinecolor1}
+  IfW Kiel %\insertsectionhead
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.25ex,dp=1ex,right]{footlinecolor2}% center
+    \insertshorttitle\hspace*{4em} % 3em
+    \insertframenumber{} / \inserttotalframenumber\hspace*{1ex}
+  \end{beamercolorbox}}%
+}
+\usepackage[UKenglish]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1,OT1]{fontenc}
+% 
+\usepackage{adjustbox}
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{enumitem}
+\setitemize{label=\textbullet, font=\large \color{Red}, itemsep=12pt} %  %https://stackoverflow.com/questions/4968557/latex-very-compact-itemize
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{apacite} % APA style citations
+\AtBeginDocument{\urlstyle{APACsame}} 
+\usepackage{natbib}
+\def\bibfont{\tiny}
+\graphicspath{{./figures/}} %this is the file in which you should save figures
+}
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+\title[Remote Sensing Inequality in South Africa]{\textbf{Estimating Inequality in South Africa with Remote Sensing Data}} % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Sebastian Krantz} % Your name
+\institute[Kiel Institute for the World Economy]
+{
+Kiel Institute for the World Economy\\ % Your institution for the title page
+\bigskip
+}
+\date{\today} % Date, can be changed to a custom date
+
+\begin{document}
+
+\begin{noheadline}
+\begin{frame} 
+\titlepage 
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{Table of Contents}
+\tableofcontents
+\end{frame}
+
+
+%------------------------------------------------
+\section{Introduction}
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Introduction}
+\begin{itemize}
+\item Exploratory work examining the potential of big data sources, in particular remote sensing data, to improve the spatial and temporal resolution of inequality estimates for South Africa. 
+\item \citet{galimberti2021measuring} estimate nightlights-based Gini-coefficients for 234 countries/territories from 1992 to 2013 $\to$ significantly correlated with income inequality across countries, but capturing different time dynamics (hypothesis: consumption, informal activities, infrastructure, wealth).
+\item \citet{lee2022high} and \citet{chi2022microestimates} use rich data sources (daytime satellite imagery, Open Street Map, Facebook connectivity data) to generate high-resolution wealth estimates (indices) for Sub-Saharan African countries.
+\item Spatial Tax Panel V3 (2014-2022) \citep{STP3}: spatial inequality in South Africa based on tax records. 
+\end{itemize}
+\end{frame}
+\end{noheadline}
+
+\begin{frame}
+\textbf{Recent Report (2019)} \textit{Inequality Trends in South Africa: A multidimensional diagnostic of inequality  by Statistics South Africa}
+\begin{itemize}
+\item Most measures suggest decrease in within-group inequality between 2006 and 2015. All provinces, except for Limpopo and Eastern Cape, reported a decrease in Gini coefficients. 
+\item Asset inequality has decreased over time for all provinces, except for Northern Cape and Free State.
+\item Inequality decreased for Indians/Asians and whites, remained fairly constant for coloureds, increased for black Africans.
+\item Labour market income is the main driver of income inequality in South Africa, contributing 74.2\% towards overall income inequality in the country in 2015.
+\item School attendance increased between 2002 and 2017, with beneficial effects on inequality. Health inequality remains. 
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+\section{Time Series Estimates}
+%------------------------------------------------
+
+%------------------------------------------------
+\subsection{National Estimates}
+%------------------------------------------------
+
+\begin{noheadline}
+\begin{frame}
+\frametitle{Time Series Estimates: National}
+%\begin{itemize}
+%\item 
+%\end{itemize}
+\includegraphics[width = \textwidth]{"../figures/SA_GINI_TimeSeries.pdf"}
+\end{frame}
+\end{noheadline}
+
+\begin{frame}
+\centering
+\includegraphics[width = \textwidth]{"../figures/STP3_SA_GINI_TimeSeries.pdf"}
+\end{frame}
+
+
+\begin{frame}
+\centering
+\includegraphics[width = 0.8\textwidth]{"../figures/nightlights_layers.png"}
+\end{frame}
+
+
+\begin{frame}
+\centering
+\includegraphics[width = 0.8\textwidth]{"../figures/population_layers.png"}
+\end{frame}
+
+
+\begin{frame}
+\centering
+\includegraphics[width = \textwidth]{"../figures/Raw_VIIRS_SA_GINI_TimeSeries.pdf"}
+\textit{Notes:} w\_gini is weighted by population, gini just uses nightlights. Fluctuations in nightlights are greater in unpopulated areas. 
+\end{frame}
+
+\begin{frame}
+\centering
+\includegraphics[width = \textwidth]{"../figures/WB_VIIRS_SA_GINI_TimeSeries.pdf"}
+\textit{Notes:} Calibrated such that \code{w\_gini(NL14$^k$, POP14) = 0.63}, the latest World Bank estimate. This is the case for $k = 1.31$.
+\end{frame}
+
+%------------------------------------------------
+\subsection{Municipal Estimates}
+%------------------------------------------------
+
+
+\begin{noheadline}
+\begin{frame}{Time Series Estimates: Municipal}
+\centering
+\includegraphics[width = \textwidth]{"../figures/STP3_SA_MUN_GINI_TimeSeries.pdf"}
+\end{frame}
+\end{noheadline}
+
+\begin{frame}
+\centering
+\includegraphics[width = \textwidth]{"../figures/WB_VIIRS_SA_MUN_GINI_TimeSeries.pdf"}
+\end{frame}
+
+\begin{frame}
+% latex table generated in R 4.1.1 by xtable 1.8-4 package
+% Mon Apr 17 12:23:37 2023
+\begin{table}[ht]
+\centering
+\caption{Correlation of STP3 and Nightlights Based Municipal GINIs}
+\resizebox{0.8\textwidth}{!}{
+\begin{tabular}{llrrrrrrr}
+  \toprule
+Trans & Variable & med\_inc & FTE & pop & avg\_rad & gini & nl\_gini & nl\_w\_gini \\ 
+  \midrule
+Overall & med\_inc &    1    &  &  &  &  &  &  \\ 
+  Between & med\_inc &    1    &  &  &  &  &  &  \\ 
+  Within & med\_inc &    1    &  &  &  &  &  &  \\ 
+  Overall & FTE &  -.006  &    1    &  &  &  &  &  \\ 
+  Between & FTE &  -.006  &    1    &  &  &  &  &  \\ 
+  Within & FTE &  -.246* &    1    &  &  &  &  &  \\ 
+  Overall & pop &   .037  &   .920* &    1    &  &  &  &  \\ 
+  Between & pop &   .038  &   .921* &    1    &  &  &  &  \\ 
+  Within & pop &  -.023  &   .077* &    1    &  &  &  &  \\ 
+  Overall & avg\_rad &   .015  &   .907* &   .972* &    1    &  &  &  \\ 
+  Between & avg\_rad &   .014  &   .911* &   .981* &    1    &  &  &  \\ 
+  Within & avg\_rad &   .157* &   .354* &  -.185* &    1    &  &  &  \\ 
+  Overall & gini &  -.491* &   .171* &   .158* &   .198* &    1    &  &  \\ 
+  Between & gini &  -.668* &   .235* &   .219* &   .261* &    1    &  &  \\ 
+  Within & gini &  -.078* &   .108* &  -.127* &   .222* &    1    &  &  \\ 
+  Overall & nl\_gini &   .006  &   .067* &   .087* &   .086* &   .013  &    1    &  \\ 
+  Between & nl\_gini &   .034  &   .105  &   .133  &   .180* &   .258* &    1    &  \\ 
+  Within & nl\_gini &  -.150* &  -.305* &   .187* &  -.838* &  -.218* &    1    &  \\ 
+  Overall & nl\_w\_gini &   .143* &  -.281* &  -.270* &  -.344* &  -.234* &  -.073* &    1    \\ 
+  Between & nl\_w\_gini &   .162* &  -.297* &  -.286* &  -.355* &  -.308* &  -.332* &    1    \\ 
+  Within & nl\_w\_gini &  -.072* &  -.231* &   .006  &  -.543* &  -.119* &   .606* &    1    \\  
+   \bottomrule \\ [-1em]
+   \multicolumn{9}{l}{\parbox{1.25\textwidth}{\footnotesize \textit{Notes}: * indicates significance at 5\% level. There are 213 municipalities. \textit{Between} data is averaged across years, \textit{Within} data is standardized (scaled and centered) within each municipality.}}
+\end{tabular}
+}
+\end{table}
+\end{frame}
+
+%------------------------------------------------
+\section{Geospatial Estimates}
+%------------------------------------------------
+
+\begin{noheadline}
+\begin{frame}{Geospatial Estimates}
+\textbf{Based on Granular Data}
+\begin{itemize}
+\item International Wealth Index by \citet{lee2022high} (calibrated to DHS data, using OSM and daylight satellite imagery, 1.6km resolution).
+\item Relative Wealth Index by \citet{chi2022microestimates} (calibrated to DHS data, daylight satellite imagery and facebook connectivity data, 2.4km resolution).
+\item VIIRS Stray Light Corrected Nighttime Day/Night Band Composites Version 1, 2020 median composite, 463.83m resolution.
+\item Spatial Tax Panel V3 (2014-2022) \citep{STP3}: GINI estimates for 213 Municipalities + Shapefile, for the years 2014-2022. I use 2020 because last available year of highres (WorldPop) population layer. 
+\end{itemize}
+\end{frame}
+\end{noheadline}
+
+
+% TODO: uncomment later!!
+\begin{frame}
+International Wealth Index \\ %\vspace{-1mm}
+\includegraphics[width = 0.95\textwidth]{"../figures/SA_IWI.png"}
+\end{frame}
+
+\begin{frame}
+Relative Wealth Index \\ %\vspace{-1mm}
+\includegraphics[width = 0.95\textwidth]{"../figures/SA_RWI.png"}
+\end{frame}
+
+\begin{frame}
+Log10 VIIRS-DNB 2020 \\ %\vspace{-1mm}
+\includegraphics[width = \textwidth]{"../figures/SA_NL20.png"}
+\end{frame}
+
+\begin{frame}
+Log10 WorldPop Un-Adjusted Population 2020 \\ %\vspace{-1mm}
+\includegraphics[width = \textwidth]{"../figures/SA_POP20.png"}
+\end{frame}
+
+%------------------------------------------------
+\subsection{Municipal Estimates}
+%------------------------------------------------
+
+\begin{noheadline}
+\begin{frame}{Municipal Estimates}
+\centering
+\includegraphics[width = \textwidth]{"../figures/STP3_municipal_joint.png"}
+\end{frame}
+\end{noheadline}
+
+\begin{frame}
+% latex table generated in R 4.1.1 by xtable 1.8-4 package
+% Mon Apr 17 17:19:14 2023
+\begin{table}[ht]
+\centering
+\caption{Correlations Across 213 Municipalities}
+\begin{tabular}{lrrrrrr}
+  \toprule
+ & IWI & RWI & LNL20 & POP20 & FTE20 \\ 
+  \midrule
+IWI &    1    &  &  &  &  &  \\ 
+  RWI &   .753* &    1    &  &  &  &  \\ 
+  LNL20 &   .236* &   .526* &    1    &  &  &  \\ 
+  POP20 &   .204* &   .483* &   .716* &    1    &  &  \\ 
+  FTE20 &   .233* &   .475* &   .638* &   .969* &    1      \\ 
+  MedInc20 &  -.304* &  -.081  &   .050  &   .030  &  -.012     \\ 
+   \bottomrule \\ [-1em]
+   \multicolumn{6}{l}{\footnotesize \textit{Notes}: * indicates significance at 5\% level. There are 213 municipalities.}
+\end{tabular}
+\end{table}
+\vspace{5mm}
+It is notable that median income from STP3 is not correlated with population, RWI or nightlights, and negatively with the IWI! 
+\end{frame}
+
+\begin{frame}
+\centering
+\includegraphics[width = \textwidth]{"../figures/STP3_municipal_gini_2020.pdf"}
+\end{frame}
+
+\begin{frame}
+Raw (uncalibrated) estimates, with or without population weights\\ \vspace{3mm}
+\includegraphics[width = \textwidth]{"../figures/STP3_municipal_gini_ests_raw.png"}
+\end{frame}
+
+\begin{noheadline}
+\begin{frame}{Calibration}
+To increase the realism of estimates, I use a calibration approach, involving finding an optimal power $k$ such that 
+$$ \underset{k}{min}\quad \frac{1}{N} \sum_{i=1}^N |GINI^\text{RS} - GINI^\text{STP3}| $$
+where $GINI^\text{RS} = w\_gini(x^k, \text{POP20})$ for $x\in$ IWI, RWI and NL20\footnote{In words: I raise the spatial income/wealth measure to an optimal power $k$ such that weighted municipal GINI estimates most closely resemble the STP3.}. 
+\begin{table} \vspace{-3mm}
+\centering
+\caption{Calibration results, with or without population weights}
+\begin{tabular}{lrrrr} \toprule
+& \multicolumn{2}{c}{Raw} & \multicolumn{2}{c}{Weighted} \\
+& $k$ & Obj. & $k$ & Obj. \\ \midrule
+IWI & 6.54 & 12.9 & 14.72 & 22.9 \\
+RWI & 4.07 & 8.4 & 7.04 & 17.9 \\
+NL20 & 1.57 & 18.7 & 1.66 & 14.0 \\ \bottomrule
+\end{tabular}
+\end{table}
+\end{frame}
+\end{noheadline}
+
+\begin{frame}
+Calibrated estimates, with or without population weights\\ \vspace{3mm}
+\includegraphics[width = \textwidth]{"../figures/STP3_municipal_gini_ests_calib.png"}
+\end{frame}
+
+
+\begin{frame}
+% latex table generated in R 4.1.1 by xtable 1.8-4 package
+% Mon Apr 17 20:27:05 2023
+\begin{table}[ht]
+\centering
+\caption{Correlations of Raw (Uncalibrated) Municipal GINI Estimates}
+\vspace{-5mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lrrrrrr}
+  \toprule
+ & NL20\_W\_GINI & IWI\_W\_GINI & RWI\_W\_GINI & NL20\_GINI & IWI\_GINI & RWI\_GINI \\ 
+  \midrule
+NL20\_W\_GINI &    1    &  &  &  &  &    \\ 
+  IWI\_W\_GINI &   .388* &    1    &  &  &  &    \\ 
+  RWI\_W\_GINI &   .568* &   .603* &    1    &  &  &    \\ 
+  NL20\_GINI &  -.111  &  -.041  &  -.066  &    1    &  &    \\ 
+  IWI\_GINI &  -.002  &   .424* &   .030  &  -.106  &    1    &    \\ 
+  RWI\_GINI &   .110  &  -.194* &   .005  &  -.013  &   .013  &    1      \\ 
+  STP3\_GINI &  -.100  &  -.320* &  -.191* &   .166* &  -.043  &   .298*    \\ 
+   \bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Correlations of Calibrated Municipal GINI Estimates}
+\vspace{-5mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lrrrrrr}
+  \toprule
+ & NL20\_W\_GINI & IWI\_W\_GINI & RWI\_W\_GINI & NL20\_GINI & IWI\_GINI & RWI\_GINI  \\ 
+  \midrule
+NL20\_W\_GINI &    1    &  &  &  &  &    \\ 
+  IWI\_W\_GINI &   .569* &    1    &  &  &  &    \\ 
+  RWI\_W\_GINI &   .623* &   .678* &    1    &  &  &    \\ 
+  NL20\_GINI &  -.056  &   .019  &  -.001  &    1    &  &    \\ 
+  IWI\_GINI &   .283* &   .364* &   .242* &  -.111  &    1    &  \\ 
+  RWI\_GINI &   .194* &  -.080  &   .194* &   .074  &   .238* &    1      \\ 
+  STP3\_GINI &  -.210* &  -.341* &  -.270* &   .185* &  -.185* &   .160*     \\ 
+   \bottomrule
+\end{tabular}
+}
+\end{table}
+\end{frame}
+
+%------------------------------------------------
+\subsection{High-Resolution Estimates}
+%------------------------------------------------
+
+
+%------------------------------------------------
+\section{Conclusions}
+%------------------------------------------------
+
+\begin{noheadline}
+\begin{frame}{Conclusions}
+\small
+\textbf{Time-Series Estimates}
+\begin{itemize} \setlength{\itemsep}{0.5em}
+\item Nightlights based national GINI estimate shows a declining trend since 2014, in-line with the STP3 estimate from 2018. 
+\item Pretty much useless for municipal GINI estimation, which also calls into question national estimate. 
+\item Since \citet{galimberti2021measuring} show that nightlights are not good at capturing time dynamics in inequality in the average country, these estimates should not be used for research and policy advice. 
+\end{itemize}
+
+\textbf{Geospatial Estimates}
+\begin{itemize}
+\item bla
+\end{itemize}
+\end{frame}
+
+% \begin{noheadline}
+\begin{frame}{References} % [allowframebreaks]{References}
+\bibliographystyle{apacite}
+\bibliography{africa_roads_osm_paper} % This links to a file bibliography.bib with the citations
+\end{frame}
+\end{noheadline}
+
+\end{document}
