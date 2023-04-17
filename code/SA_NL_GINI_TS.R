@@ -272,13 +272,24 @@ wb_nl_gini_mun <- nl_pop_data %>%
   fsubset(pop > 0 & avg_rad > 0 & !is.na(CAT_B)) %>% 
   fgroup_by(CAT_B, year) %>% 
   fsummarise(avg_rad = fmean(avg_rad),
-             pop = fmean(pop),
-             nl_gini = gini_noss(avg_rad^k)*100, 
-             nl_w_gini = w_gini(avg_rad^k, pop)*100) 
+             pop = fsum(pop),
+             nl_gini = gini_noss(avg_rad^1.566813)*100, # Powers based on STP3 calibration
+             nl_w_gini = w_gini(avg_rad^1.655078, pop)*100) 
 
 STP_MUN_NL <- STP_MUN %>% rnm(TaxYear = year) %>% 
   merge(wb_nl_gini_mun, by = .c(CAT_B, year)) %>% 
   colorder(FTE, pop, avg_rad, pos = "after")
+
+# populated_mun <- STP_MUN_NL %$% CAT_B[pop > 200000 & year == 2020]
+populated_mun <- c("WC024", "CPT", "NMA", "WC044", "WC023", "BUF", "EC122", "EC121", 
+"EC157", "EC155", "EC139", "EC153", "EC443", "KZN216", "EC441", 
+"KZN225", "ETH", "KZN292", "KZN284", "MAN", "KZN237", "KZN282", 
+"NC091", "KZN238", "FS194", "FS184", "KZN263", "KZN252", "NW403", 
+"GT421", "MP307", "GT485", "NW405", "EKU", "JHB", "GT481", "MP312", 
+"NW383", "MP313", "NW373", "MP315", "TSH", "NW372", "MP326", 
+"NW371", "MP324", "LIM472", "MP316", "NW375", "LIM473", "LIM476", 
+"MP325", "LIM355", "LIM354", "LIM333", "LIM367", "LIM332", "LIM331", 
+"LIM344", "LIM345", "LIM343")
 
 # Cross-sectional correlation
 STP_MUN_NL %>% collap(~ CAT_B, na.rm = TRUE) %>% 
@@ -292,6 +303,7 @@ STP_MUN_NL %>% STD(~ CAT_B, na.rm = TRUE, stub = FALSE) %>%
 
 # All correlations: export
 STP_MUN_NL %>% 
+  # fsubset(CAT_B %in% populated_mun) %>%
   list(Overall = .,
        Between = collap(., ~ CAT_B, na.rm = TRUE), 
        Within = STD(., ~ CAT_B, na.rm = TRUE, stub = FALSE)) %>% 
@@ -300,7 +312,6 @@ STP_MUN_NL %>%
   unlist2d("Trans", "Variable") %>% 
   roworderv(neworder = with(., radixorder(group(Variable)))) %>% 
   xtable::xtable() %>% print(booktabs = TRUE, include.rownames = FALSE)
-
 
 STP_MUN_NL %>% 
   ggplot(aes(x = year, y = nl_w_gini, group = CAT_B, alpha = I(0.5))) + 
@@ -311,7 +322,7 @@ STP_MUN_NL %>%
   scale_y_continuous(n.breaks = 10) +
   scale_x_continuous(n.breaks = 10) +
   theme_bw(base_size = 14) + ylab("GINI") +
-  ggtitle("VIIRS-DNB: GINI in 213 South African Municipalities")
+  ggtitle("VIIRS-DNB: Pop Weighted GINI in 213 South African Municipalities")
 
 dev.copy(pdf, "figures/WB_VIIRS_SA_MUN_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
 dev.off()
