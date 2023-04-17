@@ -96,6 +96,49 @@ MunGeo_data %>% qDT() %>%
   fselect(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020) %>% 
   pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
 
+range_title <- function(title, x, digits = 2) {
+  paste(title, do.call(sprintf, as.list(c("[%s, %s]", round(.range(x), digits)))))
+}
+
+plot(MunGeo_data["gini_2020"] %>% mtt(gini_2020 = gini_2020*100), key.pos = 4, border = NA, 
+     main = range_title("STP3: GINI Index 2020", MunGeo_data$gini_2020*100))
+dev.copy(pdf, "figures/STP3_municipal_gini_2020.pdf", width = 8.27, height = 5.83)
+dev.off()
+
+par(mfrow = c(3, 3), oma = c(0,0,0,0), mar = c(0,0,0,0))
+for (y in 2014:2022) {
+  v = sprintf("gini_%i", y)
+  plot(MunGeo_data[v], main = range_title(sprintf("GINI Index %i", y), MunGeo_data[[v]]), 
+       border = NA, key.pos = NULL, reset = FALSE, range = c(0.2, 1))
+}
+par(mfrow = c(1, 1))
+
+plot(MunGeo_data["MedianIncome_2020"], main = range_title("STP3: Median Income 2020", MunGeo_data$MedianIncome_2020), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["gini_2020"], main = range_title("STP3: GINI 2020", MunGeo_data$gini_2020), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["FTE_2020"], main = range_title("STP3: Full-Time-Eq. Employees 2020", MunGeo_data$FTE_2020), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["RWI"], main = range_title("Relative Wealth Index", MunGeo_data$RWI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["IWI"], main = range_title("International Wealth Index", MunGeo_data$IWI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["NL20"], main = range_title("VIIRS-DNB Nightlights (Mean)", MunGeo_data$NL20), border = NA, key.pos = NULL, reset = FALSE)
+par(mfrow = c(1, 1))
+
+dev.copy(png, "figures/STP3_municipal_gini.png", width = 11.69*200, height = 8.27*200)
+dev.off()
+
+
+# MunGeo_data %>% fselect(MedianIncome_2020, GINI_2020 = gini_2020, RWI, IWI, NL20, FTE_2020) %>% plot()
+
+par(mfrow = c(2, 3), oma = c(0,0,0,0), mar = c(0,0,0,0))
+plot(MunGeo_data["MedianIncome_2020"], main = range_title("STP3: Median Income 2020", MunGeo_data$MedianIncome_2020), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["gini_2020"], main = range_title("STP3: GINI 2020", MunGeo_data$gini_2020), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["FTE_2020"], main = range_title("STP3: Full-Time-Eq. Employees 2020", MunGeo_data$FTE_2020), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["RWI"], main = range_title("Relative Wealth Index", MunGeo_data$RWI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["IWI"], main = range_title("International Wealth Index", MunGeo_data$IWI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["NL20"], main = range_title("VIIRS-DNB Nightlights (Mean)", MunGeo_data$NL20), border = NA, key.pos = NULL, reset = FALSE)
+par(mfrow = c(1, 1))
+
+dev.copy(pdf, "figures/STP3_municipal_joint.pdf", width = 11.69, height = 8.27)
+dev.off()
+
 # Matching municipalities and Uber Hexagons
 tmp = st_contains(MunGeo, st_centroid(UberH7))
 UberH7_centroids$CAT_B <- NA_character_
