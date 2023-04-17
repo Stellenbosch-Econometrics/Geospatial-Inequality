@@ -15,7 +15,11 @@ gini_noss <- function(x) 2/length(x) * sum(seq_along(x)*sort(x)) / sum(x) - (len
 Skp1qm1 <- function(k, q) (q-1)/2 * (2*(k+1) + q) + k + 1
 all.equal(Skp1qm1(30-1, 70+1), sum(30:100))
 
-w_gini <- function(x, w, sscor = FALSE) {
+w_gini <- function(x, w, sscor = FALSE, na.rm = FALSE) {
+  if(na.rm) {
+    cc = which(complete.cases(x, w))
+    x = x[cc]; w = w[cc]
+  }
   si = .Internal(qsort(x, TRUE))
   w = w[si$ix]
   x = si$x
