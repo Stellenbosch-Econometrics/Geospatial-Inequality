@@ -240,6 +240,9 @@ Mun_GINI_calib %>% num_vars() %>% pwcor()
 tfm(MunGeo_data) <- Mun_GINI_raw %>% fsubset(match(MunGeo_data$CAT_B, CAT_B), -CAT_B) %c*% 100
 tfm(MunGeo_data) <- Mun_GINI_calib %>% fsubset(match(MunGeo_data$CAT_B, CAT_B), -CAT_B, -gini_avg) %>% add_stub("_calib", FALSE) %c*% 100
 
+# Saving results
+ st_write(MunGeo_data, "data/spatial_tax_panel/MunGeo_data.gpkg")
+
 # Export Raw Results
 oldpar <- par(mfrow = c(2, 3), oma = c(0,0,0,0), mar = c(0,0,0,0))
 plot(MunGeo_data["IWI_GINI"], main = range_title("International Wealth Index GINI", MunGeo_data$IWI_GINI), border = NA, key.pos = NULL, reset = FALSE)
@@ -253,7 +256,11 @@ par(oldpar)
 dev.copy(pdf, "figures/STP3_municipal_gini_ests_raw.pdf", width = 11.69, height = 8.27)
 dev.off()
 
-Mun_GINI_raw %>% num_vars() %>% 
+populated_mun <- MunGeo_data %$% CAT_B[POP20 > 200000]
+
+Mun_GINI_raw %>% 
+  fsubset(CAT_B %in% populated_mun) %>%
+  num_vars() %>% 
   colorderv(neworder = "W_", regex = TRUE) %>%
   pwcor(P = TRUE) %>% 
   print(digits = 3, sig.level = 0.05, show = "lower.tri", return = TRUE) %>%
@@ -272,7 +279,9 @@ par(oldpar)
 dev.copy(pdf, "figures/STP3_municipal_gini_ests_calib.pdf", width = 11.69, height = 8.27)
 dev.off()
 
-Mun_GINI_calib %>% num_vars() %>% 
+Mun_GINI_calib %>% 
+  fsubset(CAT_B %in% populated_mun) %>%
+  num_vars() %>% 
   colorderv(neworder = "W_", regex = TRUE) %>%
   pwcor(P = TRUE) %>% 
   print(digits = 3, sig.level = 0.05, show = "lower.tri", return = TRUE) %>%
