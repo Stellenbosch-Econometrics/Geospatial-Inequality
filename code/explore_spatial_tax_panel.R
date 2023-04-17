@@ -158,6 +158,7 @@ dev.off()
 #
 ### Matching municipalities and Uber Hexagons ---------
 #
+
 set_collapse(na.rm = TRUE)
 MunGeo_data <- st_read("data/spatial_tax_panel/MunGeo_data.gpkg")
 H7_grid_all <- st_read("data/spatial_tax_panel/H7_grid_all.gpkg")
@@ -223,18 +224,60 @@ Mun_GINI_raw <- H7_grid_all_grouped %>%
              RWI_W_GINI = w_gini(RWI, POP20, na.rm = TRUE)) %>% 
   merge(Mun_gini_19_21_avg, by = "CAT_B")
 
+Mun_GINI_raw %>% num_vars() %>% pwcor()
+
 Mun_GINI_calib <- H7_grid_all_grouped %>% 
   fsummarise(NL20_GINI = gini_wiki(na_rm(NL20^1.566813)), 
-             NL20_W_GINI = w_gini(NL20^0.1791315, POP20, na.rm = TRUE),
+             NL20_W_GINI = w_gini(NL20^1.655078, POP20, na.rm = TRUE),
              IWI_GINI = gini_wiki(na_rm(IWI^6.537822)),
              IWI_W_GINI = w_gini(IWI^14.71927, POP20, na.rm = TRUE),
              RWI_GINI = gini_wiki(na_rm(RWI^4.070419)),
              RWI_W_GINI = w_gini(RWI^7.044468, POP20, na.rm = TRUE)) %>% 
   merge(Mun_gini_19_21_avg, by = "CAT_B")
 
-
-Mun_GINI_raw %>% num_vars() %>% pwcor()
 Mun_GINI_calib %>% num_vars() %>% pwcor()
+
+tfm(MunGeo_data) <- Mun_GINI_raw %>% fsubset(match(MunGeo_data$CAT_B, CAT_B), -CAT_B) %c*% 100
+tfm(MunGeo_data) <- Mun_GINI_calib %>% fsubset(match(MunGeo_data$CAT_B, CAT_B), -CAT_B, -gini_avg) %>% add_stub("_calib", FALSE) %c*% 100
+
+# Export Raw Results
+oldpar <- par(mfrow = c(2, 3), oma = c(0,0,0,0), mar = c(0,0,0,0))
+plot(MunGeo_data["IWI_GINI"], main = range_title("International Wealth Index GINI", MunGeo_data$IWI_GINI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["RWI_GINI"], main = range_title("Relative Wealth Index GINI", MunGeo_data$RWI_GINI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["NL20_GINI"], main = range_title("VIIRS-DNB 2020 GINI", MunGeo_data$NL20_GINI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["IWI_W_GINI"], main = range_title("International Wealth Index Weighted GINI", MunGeo_data$IWI_W_GINI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["RWI_W_GINI"], main = range_title("Relative Wealth Index Weighted GINI", MunGeo_data$RWI_W_GINI), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["NL20_W_GINI"], main = range_title("VIIRS-DNB 2020 Weighted GINI", MunGeo_data$NL20_W_GINI), border = NA, key.pos = NULL, reset = FALSE)
+par(oldpar)
+
+dev.copy(pdf, "figures/STP3_municipal_gini_ests_raw.pdf", width = 11.69, height = 8.27)
+dev.off()
+
+Mun_GINI_raw %>% num_vars() %>% 
+  colorderv(neworder = "W_", regex = TRUE) %>%
+  pwcor(P = TRUE) %>% 
+  print(digits = 3, sig.level = 0.05, show = "lower.tri", return = TRUE) %>%
+  xtable::xtable() %>% print(booktabs = TRUE)
+
+# Export Calibrated Results
+oldpar <- par(mfrow = c(2, 3), oma = c(0,0,0,0), mar = c(0,0,0,0))
+plot(MunGeo_data["IWI_GINI_calib"], main = range_title("International Wealth Index GINI", MunGeo_data$IWI_GINI_calib), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["RWI_GINI_calib"], main = range_title("Relative Wealth Index GINI", MunGeo_data$RWI_GINI_calib), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["NL20_GINI_calib"], main = range_title("VIIRS-DNB 2020 GINI", MunGeo_data$NL20_GINI_calib), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["IWI_W_GINI_calib"], main = range_title("International Wealth Index Weighted GINI", MunGeo_data$IWI_W_GINI_calib), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["RWI_W_GINI_calib"], main = range_title("Relative Wealth Index Weighted GINI", MunGeo_data$RWI_W_GINI_calib), border = NA, key.pos = NULL, reset = FALSE)
+plot(MunGeo_data["NL20_W_GINI_calib"], main = range_title("VIIRS-DNB 2020 Weighted GINI", MunGeo_data$NL20_W_GINI_calib), border = NA, key.pos = NULL, reset = FALSE)
+par(oldpar)
+
+dev.copy(pdf, "figures/STP3_municipal_gini_ests_calib.pdf", width = 11.69, height = 8.27)
+dev.off()
+
+Mun_GINI_calib %>% num_vars() %>% 
+  colorderv(neworder = "W_", regex = TRUE) %>%
+  pwcor(P = TRUE) %>% 
+  print(digits = 3, sig.level = 0.05, show = "lower.tri", return = TRUE) %>%
+  xtable::xtable() %>% print(booktabs = TRUE)
+
              
 
 
