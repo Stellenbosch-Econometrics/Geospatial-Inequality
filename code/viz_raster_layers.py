@@ -82,7 +82,7 @@ SA_RWI = SA_RWI[SA_RWI.lon.between(minlon, maxlon) & SA_RWI.lat.between(minlat, 
 # %%
 import geopandas as gpd
 south_africa = gpd.read_file("../data/spatial_tax_panel/Spatial_Tax_Panel_v3/Shapefiles/MDB_Local_Municipal_Boundary_2018/MDB_Local_Municipal_Boundary_2018.shp") \
-                .clip_by_rect(xmin = minlon, ymin = minlat, xmax = maxlon, ymax = maxlat) 
+                  .clip_by_rect(xmin = minlon, ymin = minlat, xmax = maxlon, ymax = maxlat) 
 # %% 
 # IWI
 fig, ax = plt.subplots(figsize = (12, 12))
@@ -90,9 +90,9 @@ fig, ax = plt.subplots(figsize = (12, 12))
 ax.set_aspect('equal')
 ax.margins(0) 
 ax.set_axis_off() # Only Bbox: ax.set_frame_on(False)
-south_africa.plot(ax = ax, linewidth = 0.05, color='none', edgecolor='lightgrey') # black
+south_africa.plot(ax = ax, linewidth = 0.05, color='grey', edgecolor='black') # black
 plt.scatter(x = SA_IWI.lon, y = SA_IWI.lat, c = SA_IWI.IWI, marker=".", 
-            s = 2, cmap="turbo", edgecolors='none', vmin=0, vmax=100)
+            s = 3, cmap="turbo", edgecolors='none', vmin=0, vmax=100)
 cb = plt.colorbar(shrink = 0.5, pad = 0.02)
 cb.outline.set_color(None)
 cb.ax.set_title('IWI')
@@ -107,9 +107,9 @@ fig, ax = plt.subplots(figsize = (12, 12))
 ax.set_aspect('equal')
 ax.margins(0) 
 ax.set_axis_off() # Only Bbox: ax.set_frame_on(False)
-south_africa.plot(ax = ax, linewidth = 0.05, color='none', edgecolor='lightgrey') # black
-plt.scatter(x = SA_RWI.lon, y = SA_RWI.lat, c = SA_RWI.RWI, marker=".", 
-            s = 2, cmap="turbo", edgecolors='none') # , vmin=0, vmax=100
+south_africa.plot(ax = ax, linewidth = 0.05, color='grey', edgecolor='black') # black
+plt.scatter(x = SA_RWI.lon, y = SA_RWI.lat, c = SA_RWI.RWI, marker="s", 
+            s = 0.57, cmap="turbo", edgecolors='none') # , vmin=0, vmax=100
 cb = plt.colorbar(shrink = 0.5, pad = 0.02)
 cb.outline.set_color(None)
 cb.ax.set_title('RWI')
@@ -138,6 +138,28 @@ cb = plt.colorbar(shrink = 0.5, pad = 0.02)
 cb.outline.set_color(None)
 cb.ax.set_title('NL20')
 plt.savefig("../figures/SA_NL20.png", 
+            dpi = 200, format="png", bbox_inches="tight")
+plt.show()
+# %%
+## POP20
+data_path = "../data/WPOP_SA_1km_UNadj"
+gdal.Translate('/vsimem/clip.tif', os.path.join(data_path,  'zaf_ppp_2020_1km_Aggregated_UNadj.tif'), projWin=bbox)
+img = gdal.Open('/vsimem/clip.tif')
+img_arr = np.log10(img.GetRasterBand(1).ReadAsArray())
+# replace infinite values with nan
+img_arr[img_arr == -np.inf] = np.nan
+del img
+# %%
+fig, ax = plt.subplots(figsize = (12, 12))
+ax.set_aspect('equal')
+ax.margins(0) 
+ax.set_axis_off() # Only Bbox: ax.set_frame_on(False)
+plt.imshow(img_arr, cmap="turbo", interpolation='nearest')
+# south_africa.plot(ax = ax, linewidth = 0.05, color='none', edgecolor='black') # black
+cb = plt.colorbar(shrink = 0.5, pad = 0.02)
+cb.outline.set_color(None)
+cb.ax.set_title('POP20')
+plt.savefig("../figures/SA_POP20.png", 
             dpi = 200, format="png", bbox_inches="tight")
 plt.show()
 # %%
