@@ -474,6 +474,131 @@ NL20\_W\_GINI &    1    &  &  &  &  &    \\
 \subsection{High-Resolution Estimates}
 %------------------------------------------------
 
+\begin{frame}
+STP3 also provides median income and GINI for 1.4km hexagons in cities. This shows median income in Cape Town in 2020. \\ \vspace{1mm}
+\includegraphics[width = \textwidth]{"../figures/STP3_MedInc2020_UberHex.png"}
+\end{frame}
+
+\begin{frame}
+Comparison of Income / Wealth Measures \\ \vspace{1mm}
+\includegraphics[width = \textwidth]{"../figures/STP3_CompInc_UberHex.pdf"}
+% latex table generated in R 4.1.1 by xtable 1.8-4 package
+% Tue Apr 18 10:52:16 2023
+\begin{table}[ht]
+\centering
+\caption{\footnotesize Correltion of Income/Wealth Measures in 1.4km STP3 Hexagons}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lrrrrrrrr}
+  \toprule
+  & \multicolumn{4}{c}{\textbf{Overall (National)}} & \multicolumn{4}{c}{\textbf{Within Municipalities}} \\ 
+ & MedInc20 & IWI & RWI & NL20 & MedInc20 & IWI & RWI & NL20 \\ 
+  \midrule
+MedInc20 &   1    (1904) &  &  &  &   1    (1899) &  &  &  \\ 
+  IWI & -.079* (899) &   1    (10623) &  &  & -.082* (897) &   1    (10623) &  &  \\ 
+  RWI & -.109* (1276) &  .645* (6949) &   1    (22947) &  & -.046  (1272) &  .427* (6949) &   1    (22947) &  \\ 
+  NL20 & -.024  (1898) &  .490* (10611) &  .541* (22927) &   1    (225311) &  .057* (1893) &  .368* (10611) &  .376* (22927) &   1    (225311) \\ 
+   \bottomrule \\ [-1em]
+   \multicolumn{9}{l}{\footnotesize \textit{Notes}: * indicates significance at 5\% level. There are 213 municipalities. Within-data is standardized (scaled and centered) in each municipality.}
+\end{tabular}
+}
+\end{table}
+\end{frame}
+
+\begin{frame}
+This shows the GINI in Cape Town in 2020. \\ \vspace{1mm}
+\includegraphics[width = \textwidth]{"../figures/STP3_GINI2020_UberHex.png"}
+\end{frame}
+
+\begin{frame}
+IWI (1.6km) and RWI (2.4km) are too low-res to compute a GINI in 1.4km hexagons. \textbf{2 Options:} \vspace{2mm}
+\begin{itemize}
+\item Increase the size of Hexagons
+\item[$\to$] I use 96km2 (6km diameter) hexagons $\to$ 9.53 IWI Obs. (IWI is sparse), 12.4 RWI Obs. and 79.5 NL Obs. per hexagon.
+\item Interpolate i.e. compute GINI at high resolution using surrounding data points with spatial weights
+\item[$\to$] I compute 1km GINIs based on spatial interpolations with 5km, 10km or 30km radius i.e. a weighted GINI is computed with inverse distance $\times$ population weights. 
+\end{itemize} 
+\end{frame}
+
+\begin{frame}
+Comparison of GINI Estimates on 96km2 Hexagons \\ \vspace{1mm}
+\includegraphics[width = \textwidth]{"../figures/Hex95km_CompGini.pdf"}
+% latex table generated in R 4.1.1 by xtable 1.8-4 package
+% Tue Apr 18 12:03:40 2023
+\begin{table}[ht] \vspace{-5mm}
+\centering
+\caption{Population Weighted GINI's in 96km2 Hexagons}
+\vspace{-4mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lrrrrr}
+  \toprule
+ & IWI\_w\_GINI & RWI\_w\_GINI & NL21\_w\_GINI & WGINI\_mean & STP3\_w\_GINI\_2020 \\ 
+  \midrule
+IWI\_w\_GINI &   1    (1351) &  &  &  &  \\ 
+  RWI\_w\_GINI &  .136* (1333) &   1    (2603) &  &  &  \\ 
+  NL21\_w\_GINI &  .451* (1333) &  .075* (2519) &   1    (6471) &  &  \\ 
+  WGINI\_mean &  .827* (1316) &  .461* (1316) &  .773* (1316) &   1    (1316) &  \\ 
+  STP3\_w\_GINI\_2020 &  .084  (143) & -.188* (173) & -.270* (189) & -.093  (142) &   1    (189) \\ 
+   \bottomrule \\ [-1em]
+   \multicolumn{6}{l}{\footnotesize \textit{Notes}: * indicates significance at 5\% level}
+\end{tabular}
+}
+\end{table}
+\end{frame}
+
+
+\begin{frame}
+This shows 1km2 weighted GINI with 5km interpolation radius. \\ \vspace{1mm}
+\includegraphics[width = \textwidth]{"../figures/ALL_1km_5km_Radius.png"}
+\end{frame}
+
+
+\begin{frame}
+Comparison of GINI Estimates 1.3km2 STP3 Hexagons \\ \vspace{1mm}
+\includegraphics[width = \textwidth]{"../figures/Hex1_3km_CompGini.pdf"}
+% latex table generated in R 4.1.1 by xtable 1.8-4 package
+% Tue Apr 18 12:49:45 2023
+\begin{table}[ht] \vspace{-4mm}
+\centering
+\caption{Weighted GINI Interpolations Aggregated to 1.3km STP3}
+\vspace{-3mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lrrrrr}
+  \toprule
+ & IWI\_WGINI & RWI\_WGINI & NL\_WGINI & WGINI\_mean & STP3\_w\_GINI\_2020 \\ 
+  \midrule
+IWI\_WGINI &   1    (45536) &  &  &  &  \\ 
+  RWI\_WGINI &  .249* (44850) &   1    (57638) &  &  &  \\ 
+  NL\_WGINI &  .147* (45469) &  .169* (57532) &   1    (65957) &  &  \\ 
+  WGINI\_mean &  .842* (44731) &  .643* (44731) &  .474* (44731) &   1    (44731) &  \\ 
+  STP3\_w\_GINI\_2020 &  .138* (1611) & -.124* (1616) & -.107* (1617) &  .046  (1611) &   1    (1617) \\ 
+   \bottomrule
+\end{tabular}
+}
+\end{table}
+\end{frame}
+
+\begin{frame}
+% latex table generated in R 4.1.1 by xtable 1.8-4 package
+% Tue Apr 18 12:36:14 2023
+\begin{table}[ht]
+\centering
+\caption{Weighted GINI's in 1km2 Cells with 5km Interpolation Radius}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lrrrr}
+  \toprule
+ & IWI\_WGINI & RWI\_WGINI & NL\_WGINI & WGINI\_mean \\ 
+  \midrule
+IWI\_WGINI &   1    (174922) &  &  &  \\ 
+  RWI\_WGINI & .213* (172130) &   1    (222337) &  &  \\ 
+  NL\_WGINI & .167* (174761) & .158* (222083) &   1    (255120) &  \\ 
+  WGINI\_mean & .841* (171969) & .624* (171969) & .492* (171969) &   1    (171969) \\ 
+   \bottomrule \\ [-1em]
+   \multicolumn{5}{l}{\footnotesize \textit{Notes}: * indicates significance at 5\% level}
+\end{tabular}
+}
+\end{table}
+\end{frame}
+
 
 %------------------------------------------------
 \section{Conclusions}
@@ -490,9 +615,9 @@ NL20\_W\_GINI &    1    &  &  &  &  &    \\
 \end{itemize}
 
 \textbf{Geospatial Estimates}
-\begin{itemize}
+\begin{itemize} \setlength{\itemsep}{0.5em}
 \item Calibrated municipal GINI estimates based on nightlights or remotely sensed wealth indices are moderately consistent ($\rho = 0.6$, and $0.7$ for populated places), but at odds (negatively correlated) with STP3 GINI (negative/zero corr. of indices w. STP3 MedInc). 
-\item 
+\item High-resolution estimates, based on both 96km2 hexagons and 1km interpolations with various radii (5km preferred) are broadly consistent, and interesting to map structural inequality between communities. But not correlated with tax-based inequality (STP3). 
 \end{itemize}
 \end{frame}
 
