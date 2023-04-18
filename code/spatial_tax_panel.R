@@ -75,20 +75,35 @@ H7_grid_all <- st_read("data/spatial_tax_panel/H7_grid_all.gpkg")
 
 # Exploring the grid
 
-H7_grid_all %>% 
+H7_grid_all %>% qDT() %>% 
   fselect(IWI, RWI, NL20, POP20, MedianIncome_2020, FTE_2020, gini_2020) %>% 
   pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
 
-H7_grid_all %>% 
+H7_grid_all %>% qDT() %>% 
   fmutate(lat_lon_int = finteraction(as.integer(lat), as.integer(lon))) %>% 
   fcomputev(c(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020), 
             fscale, lat_lon_int, na.rm = TRUE) %>% 
   pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
 
-H7_grid_all %>% 
+H7_grid_all %>% qDT() %>% 
   fcomputev(c(IWI, RWI, NL20, MedianIncome_2020, FTE_2020, gini_2020), 
             fscale, CAT_B, na.rm = TRUE) %>% 
   pwcor(P = TRUE, N = TRUE) %>% print(digits = 3, sig.level = 0.05, show = "lower.tri")
+
+# Plotting 
+H7_grid_all %>% subset(CAT_B == "CPT", MedianIncome_2020) %>% plot()
+H7_grid_all %>% subset(CAT_B == "CPT", c(MedianIncome_2020, IWI, RWI, NL20)) %>% plot(lwd = 0.1)
+dev.copy(pdf, "figures/STP3_CompInc_UberHex.pdf", width = 11.69, height = 5)
+dev.off()
+
+# Export Correlatrions
+H7_grid_all %>% qDT() %>% 
+  fselect(MedInc20 = MedianIncome_2020, IWI, RWI, NL20, CAT_B) %>% {
+    cbind(Overall = num_vars(.) %>% pwcor(N = TRUE, P = TRUE) %>% 
+            print(digits = 3, sig.level = 0.05, show = "lower.tri", return = TRUE),
+          Within = STD(., ~CAT_B, stub = FALSE, keep.by = FALSE) %>% pwcor(N = TRUE, P = TRUE) %>% 
+            print(digits = 3, sig.level = 0.05, show = "lower.tri", return = TRUE))
+  } %>% xtable::xtable() %>% print(booktabs = TRUE)
 
 
 # Now also getting municipal geometry
