@@ -143,7 +143,7 @@ add_vars(SA_ineq_10km_hex_all) <- fsubset(africa_10km_hex_sf, ckmatch(SA_ineq_10
 SA_ineq_10km_hex_all %<>% st_as_sf()
 
 # Saving as geo pakage
-st_write(SA_ineq_10km_hex_all, "data/SA_ineq_10km_hex_all.gpkg")
+st_write(SA_ineq_10km_hex_all, "data/hex_grids/SA_ineq_10km_hex_all.gpkg")
 
 #
 # Now: Grid at 1km resolution ----------------------------------------------------------------
@@ -309,8 +309,10 @@ fwrite(SA_NL21_cells, "data/SA_NL21_GINI_1km_hex_10km_radius.csv")
 
 # Comparison of Estimates ------------------------------------------------
 
-# 10km hex grid
-SA_ineq_10km_hex_all <- st_read("data/SA_ineq_10km_hex_all.gpkg")
+# 10km hex grid -------------------------------------------------------------------------
+SA_ineq_10km_hex_all <- st_read("data/hex_grids/SA_ineq_10km_hex_all.gpkg")
+SA_ineq_10km_hex_all <- st_read("data/hex_grids/SA_ineq_10km_hex_all.gpkg")
+
 
 SA_ineq_10km_hex_all %>% qDT() %>% gvr("pop") %>% pwcor()
 
@@ -320,8 +322,8 @@ SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_mean") %>% pwcor()
 SA_ineq_10km_hex_all %>% qDT() %>% gvr("median") %>% gvr("w", invert = TRUE) %>% pwcor()
 SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_median") %>% pwcor()
 
-SA_ineq_10km_hex_all %>% qDT() %>% gvr("GINI") %>% gvr("w", invert = TRUE) %>% pwcor()
-SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_GINI") %>% pwcor()
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("GINI") %>% gvr("w|WGINI", invert = TRUE) %>% pwcor()
+SA_ineq_10km_hex_all %>% qDT() %>% gvr("w_GINI|WGINI") %>% pwcor()
 
 SA_ineq_10km_hex_all %>% qDT() %>% gvr("TI") %>% pwcor()
 SA_ineq_10km_hex_all %>% qDT() %>% gvr("NHI") %>% pwcor()
@@ -340,7 +342,7 @@ SA_ineq_10km_hex_all %>% st_write("data/SA_ineq_10km_hex_all.gpkg")
 SA_ineq_10km_hex_all %>% qDT() %>% fselect(GINI_mean, WGINI_mean, TI_mean, HI_mean, NHI_mean) %>% pwcor()
 
 
-# 1km interpolations
+# 1km interpolations -------------------------------------------------------------------------------------
 set_collapse(nthreads = 4, na.rm = TRUE)
 
 SA_1km_5km_radius <- fread("data/SA_IWI_GINI_1km_hex_5km_radius.csv") %>% add_stub("IWI_", cols = 4:5) %>% 
@@ -380,5 +382,12 @@ SA_1km_30km_radius %>% fwrite("data/SA_GINI_1km_hex_30km_radius.csv")
 SA_1km_30km_radius %>% gvr("_GINI|^GINI_") %>% pwcor()
 SA_1km_30km_radius %>% gvr("_WGINI|^WGINI_") %>% pwcor()
 SA_1km_30km_radius %>% gvr("_mean") %>% pwcor()
+
+#
+### Exploration -----------------------------------------
+#
+
+
+
 
 
