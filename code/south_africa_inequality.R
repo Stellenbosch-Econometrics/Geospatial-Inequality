@@ -5,11 +5,11 @@
 library(fastverse)
 set_collapse(nthreads = 4, na.rm = FALSE)
 
-SA_IWI <- fread("data/South Africa_estimated_wealth_index.csv") %>% frename(estimated_IWI = IWI)
-SA_RWI <- fread("data/South Africa_RWI.csv") %>% frename(longitude = lon, latitude = lat, rwi = RWI)
+SA_IWI <- fread("data/SA_IWI.csv") %>% frename(estimated_IWI = IWI)
+SA_RWI <- fread("data/SA_RWI.csv") %>% frename(longitude = lon, latitude = lat, rwi = RWI)
 
 source("code/gini_helper.R")
-source("/Users/sebastiankrantz/Documents/IFW Kiel/Africa-Infrastructure/code/osm_helpers.R")
+source("code/spatial_helpers.R")
 
 # South Africa Boundaries
 minlon = 10; minlat = -36; maxlon = 40; maxlat = -20 

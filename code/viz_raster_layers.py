@@ -74,9 +74,9 @@ plt.show()
 
 
 # %% Now we will plot the estimated wealth index and the RWI
-SA_IWI = pd.read_csv("../data/South Africa_estimated_wealth_index.csv").rename({"estimated_IWI" : "IWI"}, axis=1)
+SA_IWI = pd.read_csv("../data/SA_IWI.csv").rename({"estimated_IWI" : "IWI"}, axis=1)
 SA_IWI = SA_IWI[SA_IWI.lon.between(minlon, maxlon) & SA_IWI.lat.between(minlat, maxlat)]
-SA_RWI = pd.read_csv("../data/South Africa_RWI.csv").rename({"longitude" : "lon", "latitude" : "lat", "rwi" : "RWI"}, axis=1)
+SA_RWI = pd.read_csv("../data/SA_RWI.csv").rename({"longitude" : "lon", "latitude" : "lat", "rwi" : "RWI"}, axis=1)
 SA_RWI = SA_RWI[SA_RWI.lon.between(minlon, maxlon) & SA_RWI.lat.between(minlat, maxlat)]
 
 # %%

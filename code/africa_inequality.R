@@ -7,7 +7,7 @@ fastverse_extend(qs)
 set_collapse(nthreads = 4, na.rm = FALSE)
 
 source("code/gini_helper.R")
-source("/Users/sebastiankrantz/Documents/IFW Kiel/Africa-Infrastructure/code/osm_helpers.R")
+source("code/spatial_helpers.R")
 
 # Import data and cropping to Africa
 minlon = -27; minlat = -36; maxlon = 59; maxlat = 38 # Africa Boundaries

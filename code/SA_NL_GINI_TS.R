@@ -5,7 +5,7 @@
 library(fastverse)
 set_collapse(nthreads = 4, na.rm = FALSE, sort = FALSE)
 source("code/gini_helper.R")
-source("/Users/sebastiankrantz/Documents/IFW Kiel/Africa-Infrastructure/code/osm_helpers.R")
+source("code/spatial_helpers.R")
 
 nl_annual_path <- "data/south_africa_viirs_dnb_nightlights_v1_vcmslcfg_annual_median_composite"
 nl_files <- list.files(nl_annual_path)

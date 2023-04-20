@@ -37,7 +37,7 @@ H7_wide <- H7 %>% dcast(hex7 ~ TaxYear, value.var = .c(MedianIncome, FTE, gini))
 
 # Getting H7 Geometry
 fastverse_extend(sf)
-source("/Users/sebastiankrantz/Documents/IFW Kiel/Africa-Infrastructure/code/osm_helpers.R")
+source("code/spatial_helpers.R")
 
 UberH7 <- st_read("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Shapefiles/UberH3_7")
 UberH7_centroids <- UberH7 %>% st_centroid() %>% qDT() %>% 
@@ -47,8 +47,8 @@ UberH7_centroids <- UberH7 %>% st_centroid() %>% qDT() %>%
 UberH7_centroids %$% round_to_kms_exact(lon, lat, 1.8) %>% any_duplicated()
 
 # Adding Wealth Estimates
-SA_IWI <- fread("data/South Africa_estimated_wealth_index.csv") %>% frename(estimated_IWI = IWI) %>% fmutate(img_embedding = NULL)
-SA_RWI <- fread("data/South Africa_RWI.csv") %>% frename(longitude = lon, latitude = lat, rwi = RWI)
+SA_IWI <- fread("data/SA_IWI.csv") %>% frename(estimated_IWI = IWI) %>% fmutate(img_embedding = NULL)
+SA_RWI <- fread("data/SA_RWI.csv") %>% frename(longitude = lon, latitude = lat, rwi = RWI)
 SA_NL20 <- terra::rast("data/south_africa_viirs_dnb_nightlights_v1_vcmslcfg_annual_median_composite/2020.tif") %>% 
            as.data.frame(xy = TRUE) %>% set_names(.c(lon, lat, NL20)) %>% fsubset(NL20 %!=% -9999) %>% qDT()
 SA_POP20 <- terra::rast("data/WPOP_SA_1km_UNadj/zaf_ppp_2020_1km_Aggregated_UNadj.tif") %>% 
