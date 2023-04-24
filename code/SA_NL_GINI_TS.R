@@ -31,20 +31,7 @@ pop_data <- pop_files %>% set_names(substr(., 9, 12)) %>%
   unlist2d("year", id.factor = TRUE, DT = TRUE) %>% 
   fmutate(year = as.integer(levels(year))[year])
 
-# Checks for Spatial Matching
-
-pop_data %>% fselect(year, lat, lon) %>% any_duplicated()
-nl_data %>% fselect(year, lat, lon) %>% any_duplicated()
-
-pop_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
-  fselect(year, lat, lon) %>% any_duplicated()
-
-nl_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
-  fselect(year, lat, lon) %>% fduplicated() %>% qtable()
-
 # Forecasting Population 
-
-pop_data %<>% ftransform(round_to_kms_fast(lon, lat, 0.63))
 
 pop_forecast <- pop_data %>% 
   roworder(year) %>% 
@@ -65,8 +52,20 @@ pop_data_forecast <- rbind(pop_data,
   fmutate(year = as.integer(levels(year))[year]) %>% 
   colorder(year))
 
+# Checks for Spatial Matching
+
+pop_data %>% fselect(year, lat, lon) %>% any_duplicated()
+nl_data %>% fselect(year, lat, lon) %>% any_duplicated()
+
+pop_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
+  fselect(year, lat, lon) %>% any_duplicated()
+
+nl_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
+  fselect(year, lat, lon) %>% fduplicated() %>% qtable()
+
 # Spatial Matching
 nl_pop_data <- pop_data_forecast %>% 
+  ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
   merge(nl_data %>% ftransform(round_to_kms_fast(lon, lat, 0.63)) %>% 
          fgroup_by(year, lat, lon) %>% fmean(), by = .c(year, lat, lon)) %>% 
   roworder(year, lat, lon)

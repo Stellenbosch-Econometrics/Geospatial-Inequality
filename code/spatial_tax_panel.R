@@ -96,7 +96,7 @@ H7_grid_all %>% subset(CAT_B == "CPT", c(MedianIncome_2020, IWI, RWI, NL20)) %>%
 dev.copy(pdf, "figures/STP3_CompInc_UberHex.pdf", width = 11.69, height = 5)
 dev.off()
 
-# Export Correlatrions
+# Export Correlations
 H7_grid_all %>% qDT() %>% 
   fselect(MedInc20 = MedianIncome_2020, IWI, RWI, NL20, CAT_B) %>% {
     cbind(Overall = num_vars(.) %>% pwcor(N = TRUE, P = TRUE) %>% 

@@ -1,7 +1,5 @@
 ## Geospatial (Remote Sensing) Inequality Estimates for South Africa
 
-***Note:* This repo is still being cleaned up. **
-
 This is exploratory work and summarized in the presentation. It depends on different data sources and several analysis scripts described below.
 
 ### Data
@@ -16,7 +14,21 @@ This is exploratory work and summarized in the presentation. It depends on diffe
 
 ### Analysis Scripts
 
-- `south_africa_inequality.R`: Produces spatial remotely sensed inequality estimates for South Africa inside 96km2 hexagons or 1km2 interpolations with 5 or 10km radius - based on IWI, RWI and Nightlights in 2020. 
+- `SA_NL_GINI_TS.R`: Produces time series estimates of inequality in South Africa based on annual nightlights median composite images since 2014. It also computes and explores municipal nightlights time series, which are however deemed useless.
 
-- `NA_NL_GINI_TS.R`: Produces time series estimates of inequality in South Africa based on annual nightlights median composite images since 2014. 
+- `SA_inequality.R`: Produces spatial remotely sensed inequality estimates for South Africa inside 96km2 hexagons or 1km2 interpolations with 5 or 10km radius - based on IWI, RWI and Nightlights in 2020. 
+
+- `spatial_tax_panel.R`: Explores the Spatial Tax Panel v3.7 and joins it with the RWI, IWI, Nightlights and Population, from which alternative municipal GINI estimates are produces. The estimates are compared using correlations and graphs. 
+
+- `explore_SA_inequality.R`: Explores the inequality estimates computed in `SA_inequality.R` using correlations and graphs, and relates them to the Uber Hexagons of the Spatial Tax Panel v3.7. 
+
+- `viz_raster_layers.py`: Python script to plot raster layers and nightlights/wealth estimates at high resolution using Matplotlib. 
+
+### Results
+
+- The `results/` folder contains all the GINI estimates produced by various scripts. The result involving 96km2 hexagons is saved as a [GeoPackage](https://www.geopackage.org/) database, which contains the geometry and can be read from many softwares. The folder also contains a [QGIS](https://qgis.org/en/site/) project to visualize these different estimates. 
+
+- The `figures/` folder contains various graphs and figures. 
+
+- The `presentation/` folder contains a Beamer presentation of the results, delivered at the BBL seminar in the Stellenbosch Economics Department on April 18, 2023. The seminar was recorded. 
 
