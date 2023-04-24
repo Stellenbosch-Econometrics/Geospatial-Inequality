@@ -4,7 +4,7 @@
 
 library(fastverse)
 set_collapse(nthreads = 4, na.rm = FALSE, sort = FALSE)
-source("code/gini_helper.R")
+source("code/gini.R")
 source("code/spatial_helpers.R")
 
 nl_annual_path <- "data/south_africa_viirs_dnb_nightlights_v1_vcmslcfg_annual_median_composite"

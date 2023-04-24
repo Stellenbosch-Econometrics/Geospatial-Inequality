@@ -186,7 +186,7 @@ for(i in seq_along(ind)) setv(H7_grid_all$CAT_B, ind[[i]], MunGeo_data$CAT_B[i],
 st_write(H7_grid_all, "data/spatial_tax_panel/H7_grid_all.gpkg")
 
 # Computing GINI estimates
-source("code/gini_helper.R")
+source("code/gini.R")
 
 
 H7_grid_all %>% fselect(IWI, RWI, NL20, POP20) %>% descr()

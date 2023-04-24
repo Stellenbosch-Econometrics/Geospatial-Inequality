@@ -8,7 +8,7 @@ set_collapse(nthreads = 4, na.rm = FALSE)
 IWI <- fread("data/SA_IWI.csv") %>% frename(estimated_IWI = IWI)
 RWI <- fread("data/SA_RWI.csv") %>% frename(longitude = lon, latitude = lat, rwi = RWI)
 
-source("code/gini_helper.R")
+source("code/gini.R")
 source("code/spatial_helpers.R")
 
 # South Africa Boundaries
