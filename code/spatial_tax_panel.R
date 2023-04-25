@@ -28,6 +28,13 @@ MunGeo <- st_read(MunGeo_file)
 UberH7_file <- "data/spatial_tax_panel/Spatial_Tax_Panel_v3/Shapefiles/UberH3_7"
 unzip(paste0(UberH7_file, ".zip"), exdir = UberH7_file, junkpaths = TRUE)
 UberH7 <- st_read(UberH7_file)
+UberH7_areas <- st_area(UberH7)
+descr(UberH7_areas)
+hist(UberH7_areas)
+# Average area in km2
+mean(UberH7_areas) / 1e6
+# Radius of hexagon in km
+mean(sqrt(UberH7_areas/pi)) / 1000
 
 # Load Wealth Estimates
 SA_IWI <- fread("data/SA_IWI.csv") %>% frename(estimated_IWI = IWI)

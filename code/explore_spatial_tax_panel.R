@@ -113,7 +113,7 @@ MunGeo_data %>% qDT() %>%
 
 
 #
-### 1.4km2 Hexagon Level --------------------------------------------------------------
+### 5.5km2 Uber Hexagon Level --------------------------------------------------------------
 #
 
 H7_grid_all <- st_read("results/STP3_Hex7_grid.gpkg")
