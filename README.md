@@ -18,9 +18,11 @@ This is exploratory work and summarized in the presentation. It depends on diffe
 
 - `SA_inequality.R`: Produces spatial remotely sensed inequality estimates for South Africa inside 96km2 hexagons or 1km2 interpolations with 5 or 10km radius - based on IWI, RWI and Nightlights in 2020. 
 
+- `explore_SA_inequality.R`: Explores the inequality estimates computed in `SA_inequality.R` using correlations and graphs, and relates them to the Uber Hexagons of the Spatial Tax Panel v3.7. 
+
 - `spatial_tax_panel.R`: Explores the Spatial Tax Panel v3.7 and joins it with the RWI, IWI, Nightlights and Population, from which alternative municipal GINI estimates are produces. The estimates are compared using correlations and graphs. 
 
-- `explore_SA_inequality.R`: Explores the inequality estimates computed in `SA_inequality.R` using correlations and graphs, and relates them to the Uber Hexagons of the Spatial Tax Panel v3.7. 
+- `explore_spatial_tax_panel.R`: Explores the inequality estimates computed in `spatial_tax_panel.R` using correlations and graphs. 
 
 - `viz_raster_layers.py`: Python script to plot raster layers and nightlights/wealth estimates at high resolution using Matplotlib. 
 
