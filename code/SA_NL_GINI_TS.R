@@ -206,34 +206,33 @@ SA_GINI_ALL %>% dcast(year ~ series) %>% pwcor()
 ### Optimization with Single kappa Objective ----------------------------
 #
 
-np_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year == 2014,
-                                           year, pop, avg_rad) 
-
 # Check that we're not excluding much population in zero nightlights areas
 nl_pop_data %>% 
   fgroup_by(nl_g0 = avg_rad > 0) %>% fselect(pop) %>% fsum()
 
-pwcor(np_pop_data_pos)
+nl_pop_data_pos_14 <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year == 2014, pop, avg_rad) 
+pwcor(nl_pop_data_pos_14)
 
 objective <- function(k) {
-    np_pop_data_pos %>% 
+    nl_pop_data_pos_14 %>% 
       fsummarise(nl_gini = w_gini(avg_rad^k, pop)*100) %$%
       abs(63 - nl_gini) # 63 = World Bank GINI for 2014
 }
 
+# Optimization
 result <- optimize(objective, c(0.01, 100))
-
 k <- result$minimum
 
-sk_gini_res <- nl_pop_data %>% 
+# Now computing calibrated (World Bank) GINI's
+nl_gini_res <- nl_pop_data %>% 
   fsubset(pop > 0 & avg_rad > 0) %>%
   fgroup_by(year) %>% 
   fsummarise(gini = gini_noss(avg_rad^k)*100, 
              w_gini = w_gini(avg_rad^k, pop)*100) 
 
-sk_gini_res %$% ts(cbind(gini, w_gini), start = year[1]) %>% plot()
+nl_gini_res %$% ts(cbind(gini, w_gini), start = year[1]) %>% plot()
 
-sk_gini_res %>% 
+nl_gini_res %>% 
   fselect(-gini) %>% 
   merge(SA_WB %>% fcompute(year = year(Date), wb_gini = SI_POV_GINI), by = "year", all = TRUE) %>% 
   melt("year", na.rm = TRUE) %>% 
@@ -257,7 +256,7 @@ dev.off()
 fastverse_extend(sf)
 MunGeo <- st_read("data/spatial_tax_panel/Spatial_Tax_Panel_v3/Shapefiles/MDB_Local_Municipal_Boundary_2018")
 nl_pop_sf <- nl_pop_data %>% st_as_sf(coords = c("lon", "lat"), crs = 4326)
-system.time(ind <- st_contains(MunGeo, nl_pop_sf))
+ind <- st_contains(MunGeo, nl_pop_sf) # Can take a while (5 min)
 rm(nl_pop_sf); gc()
 
 nl_pop_data$CAT_B <- NA_character_
@@ -298,7 +297,7 @@ STP_MUN_NL %>% STD(~ CAT_B, na.rm = TRUE, stub = FALSE) %>%
 
 # All correlations: export
 STP_MUN_NL %>% 
-  # fsubset(CAT_B %in% populated_mun) %>%
+  fsubset(CAT_B %in% populated_mun) %>%  # comment out this line for all municipalities
   list(Overall = .,
        Between = collap(., ~ CAT_B, na.rm = TRUE), 
        Within = STD(., ~ CAT_B, na.rm = TRUE, stub = FALSE)) %>% 
@@ -322,27 +321,27 @@ STP_MUN_NL %>%
 dev.copy(pdf, "figures/WB_VIIRS_SA_MUN_GINI_TimeSeries.pdf", width = 9.27, height = 5.83)
 dev.off()
 
-#
-### Optimization with Multiple Kappa Objective (Experimental, following Galimberti et. al. (2020)) ----------------------------
-#
-
-# Different powers as in the paper
-kappa <- c(0.1, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0)
-
-nl_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year %in% swid_gini$year) %>% fgroup_by(year) 
-attr(nl_pop_data_pos, "kappa_mat") <- lapply(as.list(kappa), \(k) nl_pop_data_pos$avg_rad^k) %>% set_names(paste0("avg_rad_", kappa)) %>% qM()
-
-objective <- function(kvec) {
-  nl_pop_data_pos %>% 
-    ftransform(avg_rad_w = attr(., "kappa_mat") %*% kvec) %>%
-    fsummarise(nl_gini = w_gini(avg_rad_w, pop)*100) %>% qDT() %>%
-    merge(swid_gini, by = "year") %$% 
-    mean(abs(gini_disp - nl_gini))
-}
-
-mv_res <- optim(rep(1.1, length(kappa)), objective, 
-             lower = rep(0.01, length(kappa)), 
-             upper = rep(100, length(kappa)), 
-             method = "L-BFGS-B")
-
-  # -> No convergence !! (127 iterations, then: NORM OF PROJECTED GRADIENT <= PGTOL)
+# #
+# ### Optimization with Multiple Kappa Objective (Experimental, following Galimberti et. al. (2020)) ----------------------------
+# #
+# 
+# # Different powers as in the paper
+# kappa <- c(0.1, 0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0)
+# 
+# nl_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year %in% swid_gini$year) %>% fgroup_by(year) 
+# attr(nl_pop_data_pos, "kappa_mat") <- lapply(as.list(kappa), \(k) nl_pop_data_pos$avg_rad^k) %>% set_names(paste0("avg_rad_", kappa)) %>% qM()
+# 
+# objective <- function(kvec) {
+#   nl_pop_data_pos %>% 
+#     ftransform(avg_rad_w = attr(., "kappa_mat") %*% kvec) %>%
+#     fsummarise(nl_gini = w_gini(avg_rad_w, pop)*100) %>% qDT() %>%
+#     merge(swid_gini, by = "year") %$% 
+#     mean(abs(gini_disp - nl_gini))
+# }
+# 
+# mv_res <- optim(rep(1.1, length(kappa)), objective, 
+#              lower = rep(0.01, length(kappa)), 
+#              upper = rep(100, length(kappa)), 
+#              method = "L-BFGS-B")
+# 
+#   # -> No convergence !! (127 iterations, then: NORM OF PROJECTED GRADIENT <= PGTOL)
