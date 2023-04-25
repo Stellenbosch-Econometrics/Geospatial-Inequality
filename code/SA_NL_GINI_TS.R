@@ -206,11 +206,10 @@ SA_GINI_ALL %>% dcast(year ~ series) %>% pwcor()
 ### Optimization with Single kappa Objective ----------------------------
 #
 
-# swid_gini <- SA_SWID[between(year, 2014, 2022)]
-# print(swid_gini)
-np_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year == 2014, # year %in% swid_gini$year, 
-                                           year, pop, avg_rad) # %>% fgroup_by(year)
+np_pop_data_pos <- nl_pop_data %>% fsubset(pop > 0 & avg_rad > 0 & year == 2014,
+                                           year, pop, avg_rad) 
 
+# Check that we're not excluding much population in zero nightlights areas
 nl_pop_data %>% 
   fgroup_by(nl_g0 = avg_rad > 0) %>% fselect(pop) %>% fsum()
 
@@ -219,15 +218,12 @@ pwcor(np_pop_data_pos)
 objective <- function(k) {
     np_pop_data_pos %>% 
       fsummarise(nl_gini = w_gini(avg_rad^k, pop)*100) %$%
-      # merge(swid_gini, by = "year") %$% 
-      mean(abs(63 - nl_gini)) # World Bank GINI for 2014
+      abs(63 - nl_gini) # 63 = World Bank GINI for 2014
 }
 
 result <- optimize(objective, c(0.01, 100))
-# gini_disp: k = 1.334723, objective = 0.3401935
-# gini_mkt: k = 1.822889, objective = 0.3002254
 
-k <- 1.308966
+k <- result$minimum
 
 sk_gini_res <- nl_pop_data %>% 
   fsubset(pop > 0 & avg_rad > 0) %>%
@@ -327,7 +323,7 @@ dev.copy(pdf, "figures/WB_VIIRS_SA_MUN_GINI_TimeSeries.pdf", width = 9.27, heigh
 dev.off()
 
 #
-### Optimization with Multiple Kappa Objective ----------------------------
+### Optimization with Multiple Kappa Objective (Experimental, following Galimberti et. al. (2020)) ----------------------------
 #
 
 # Different powers as in the paper
