@@ -38,3 +38,6 @@ This is exploratory work and summarized in the presentation. It depends on diffe
 
 - The `presentation/` folder contains a Beamer presentation of the results, delivered at the BBL seminar in the Stellenbosch Economics Department on April 18, 2023. The seminar was recorded. 
 
+### Further Notes
+
+- Every script should be evaluated on a fresh R session, in particular settings that optimize some of the libraries used such as `set_collapse(nthreads = 4, na.rm = FALSE, sort = FALSE)` are not to be used on all scripts. 
