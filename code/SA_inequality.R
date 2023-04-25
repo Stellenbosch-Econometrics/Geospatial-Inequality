@@ -153,7 +153,7 @@ ineq_96km2_hex_all %<>% add_vars(cells %>% fselect(-seqnum)) %>%
   copyMostAttrib(cells) %>% st_make_valid()
 
 # Saving as geo pakage
-st_write(ineq_96km2_hex_all, "results/hex_grids/SA_ineq_96km2_hex_all.gpkg")
+st_write(ineq_96km2_hex_all, "results/SA_ineq_96km2_hex_all.gpkg")
 
 rm(cells, ineq_96km2_hex_all, IWI_ineq_96km2_hex, RWI_ineq_96km2_hex, NL20_ineq_96km2_hex, world_96km2_hex); gc()
 
@@ -215,7 +215,7 @@ IWI_1km_cells %<>% replace_Inf() %>% na_omit(cols = names(.) %like% "GINI", prop
 
 IWI_1km_cells %>% gvr("GINI") %>% pwcor()
 
-IWI_1km_cells %>% fwrite("results/1km_interpolations/SA_IWI_GINI_1km.csv")
+IWI_1km_cells %>% fwrite("results/SA_IWI_GINI_1km.csv")
 
 
 # Same for RWI ---------------------------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ RWI_1km_cells %<>% replace_Inf() %>% na_omit(cols = names(.) %like% "GINI", prop
 
 RWI_1km_cells %>% gvr("GINI") %>% pwcor()
 
-RWI_1km_cells %>% fwrite("results/1km_interpolations/SA_RWI_GINI_1km.csv")
+RWI_1km_cells %>% fwrite("results/SA_RWI_GINI_1km.csv")
 
 # Same for NL20 -------------------------------------------------------------------------------------------------------------------------
 
@@ -291,4 +291,4 @@ NL20_1km_cells %<>% replace_Inf() %>% na_omit(cols = names(.) %like% "GINI", pro
 
 NL20_1km_cells %>% gvr("GINI") %>% pwcor()
 
-NL20_1km_cells %>% fwrite("results/1km_interpolations/SA_NL20_GINI_1km.csv")
+NL20_1km_cells %>% fwrite("results/SA_NL20_GINI_1km.csv")
