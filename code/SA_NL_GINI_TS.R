@@ -220,7 +220,7 @@ objective <- function(k) {
     np_pop_data_pos %>% 
       fsummarise(nl_gini = w_gini(avg_rad^k, pop)*100) %$%
       # merge(swid_gini, by = "year") %$% 
-      mean(abs(63 - nl_gini))
+      mean(abs(63 - nl_gini)) # World Bank GINI for 2014
 }
 
 result <- optimize(objective, c(0.01, 100))
