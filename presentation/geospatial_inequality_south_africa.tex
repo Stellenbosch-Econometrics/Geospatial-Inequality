@@ -475,7 +475,7 @@ NL20\_W\_GINI &    1    &  &  &  &  &    \\
 %------------------------------------------------
 
 \begin{frame}
-STP3 also provides median income and GINI for 1.4km hexagons in cities. This shows median income in Cape Town in 2020. \\ \vspace{1mm}
+STP3 also provides median income and GINI for 5.5km2 hexagons in cities. This shows median income in Cape Town in 2020. \\ \vspace{1mm}
 \includegraphics[width = \textwidth]{"../figures/STP3_MedInc2020_UberHex.png"}
 \end{frame}
 
@@ -486,7 +486,7 @@ Comparison of Income / Wealth Measures \\ \vspace{1mm}
 % Tue Apr 18 10:52:16 2023
 \begin{table}[ht]
 \centering
-\caption{\footnotesize Correltion of Income/Wealth Measures in 1.4km STP3 Hexagons}
+\caption{\footnotesize Correlation of Income/Wealth Measures in 5.5km2 STP3 Hexagons}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lrrrrrrrr}
   \toprule
@@ -505,17 +505,17 @@ MedInc20 &   1    (1904) &  &  &  &   1    (1899) &  &  &  \\
 \end{frame}
 
 \begin{frame}
-This shows the GINI in Cape Town in 2020. \\ \vspace{1mm}
+This shows the STP3 GINI in Cape Town in 2020 \\ \vspace{1mm}
 \includegraphics[width = \textwidth]{"../figures/STP3_GINI2020_UberHex.png"}
 \end{frame}
 
 \begin{frame}
-IWI (1.6km) and RWI (2.4km) are too low-res to compute a GINI in 1.4km hexagons. \textbf{2 Options:} \vspace{2mm}
+IWI (1.6km) and RWI (2.4km) are too low-res to compute a GINI in 5.5km2 ($\sim$ 2.6km diameter) hexagons. \textbf{2 Options:} \vspace{2mm}
 \begin{itemize}
 \item Increase the size of Hexagons
 \item[$\to$] I use 96km2 (6km diameter) hexagons $\to$ 9.53 IWI Obs. (IWI is sparse), 12.4 RWI Obs. and 79.5 NL Obs. per hexagon.
 \item Interpolate i.e. compute GINI at high resolution using surrounding data points with spatial weights
-\item[$\to$] I compute 1km GINIs based on spatial interpolations with 5km, 10km or 30km radius i.e. a weighted GINI is computed with inverse distance $\times$ population weights. 
+\item[$\to$] I compute 1km GINIs based on spatial interpolations with 5km and 10km radius i.e. a weighted GINI is computed with inverse distance $\times$ population weights
 \end{itemize} 
 \end{frame}
 
@@ -547,19 +547,19 @@ IWI\_w\_GINI &   1    (1351) &  &  &  &  \\
 
 
 \begin{frame}
-This shows 1km2 weighted GINI with 5km interpolation radius. \\ \vspace{1mm}
+This shows 1km2 weighted GINI with 5km interpolation radius \\ \vspace{1mm}
 \includegraphics[width = \textwidth]{"../figures/ALL_1km_5km_Radius.png"}
 \end{frame}
 
 
 \begin{frame}
-Comparison of GINI Estimates 1.4km2 STP3 Hexagons \\ \vspace{1mm}
+Comparison of GINI Estimates 5.5km2 STP3 Hexagons \\ \vspace{1mm}
 \includegraphics[width = \textwidth]{"../figures/Hex1_3km_CompGini.pdf"}
 % latex table generated in R 4.1.1 by xtable 1.8-4 package
 % Tue Apr 18 12:49:45 2023
 \begin{table}[ht] \vspace{-4mm}
 \centering
-\caption{Weighted GINI Interpolations Aggregated to 1.4km STP3}
+\caption{Weighted GINI Interpol. Aggregated to 5.5km2 STP3 Hexagons}
 \vspace{-3mm}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lrrrrr}
