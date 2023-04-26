@@ -39,6 +39,8 @@ mean(sqrt(UberH7_areas/pi)) / 1000
 # Load Wealth Estimates
 SA_IWI <- fread("data/SA_IWI.csv") %>% frename(estimated_IWI = IWI)
 SA_RWI <- fread("data/SA_RWI.csv") %>% frename(longitude = lon, latitude = lat, rwi = RWI)
+# Here I indeed use the V1 2020 image, but it would have been better to use V2.1: data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked.dat.tif
+# Perhaps you can repeat this with the better image...
 SA_NL20 <- terra::rast("data/south_africa_viirs_dnb_nightlights_v1_vcmslcfg_annual_median_composite/2020.tif") %>% 
   as.data.frame(xy = TRUE) %>% set_names(.c(lon, lat, NL20)) %>% fsubset(NL20 %!=% -9999) %>% qDT()
 SA_POP20 <- terra::rast("data/WPOP_SA_1km_UNadj/zaf_ppp_2020_1km_Aggregated_UNadj.tif") %>% 
