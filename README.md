@@ -24,7 +24,7 @@ This is exploratory work and summarized in the presentation. It depends on diffe
 
 - `explore_SA_inequality.R`: Explores the inequality estimates computed in `SA_inequality.R` using correlations and graphs, and relates them to the Uber Hexagons of the Spatial Tax Panel v3.7. 
 
-- `spatial_tax_panel.R`: Explores the Spatial Tax Panel v3.7 and joins it with the RWI, IWI, Nightlights and Population, from which alternative municipal GINI estimates are produces. The estimates are compared using correlations and graphs. 
+- `spatial_tax_panel.R`: Explores the Spatial Tax Panel v3.7 and joins it with the RWI, IWI, Nightlights and Population, from which alternative municipal GINI estimates are produces. The estimates are compared using correlations and graphs. *Note* that for consistency with the STP3 and population estimates for 2020, I here use the Nightlights 2020 V1 layer. This was probably not such a great idea, especially for the municipal estimates. I have kept it like this for replication purposes, but it would be good to recalculate these results using the better Nightlights 2021 V2.1 image included in the repo. 
 
 - `explore_spatial_tax_panel.R`: Explores the inequality estimates computed in `spatial_tax_panel.R` using correlations and graphs. 
 
