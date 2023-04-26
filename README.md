@@ -32,7 +32,7 @@ This is exploratory work and summarized in the presentation. It depends on diffe
 
 ### Results
 
-- The `results/` folder contains all the GINI estimates produced by various scripts. The result involving 96km2 hexagons is saved as a [GeoPackage](https://www.geopackage.org/) database, which contains the geometry and can be read from many softwares. The folder also contains a [QGIS](https://qgis.org/en/site/) project to visualize these different estimates. 
+- The `results/` folder contains all the GINI estimates produced by various scripts. The result involving 96km2 hexagons and the STP3 are saved as [GeoPackage](https://www.geopackage.org/) databases, which contain the geometry and can be read from many softwares. The folder also contains a [QGIS](https://qgis.org/en/site/) project to visualize these different estimates. 
 
 - The `figures/` folder contains various graphs and figures, many of which are included in the presentation. 
 
