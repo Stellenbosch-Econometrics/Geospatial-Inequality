@@ -40,4 +40,4 @@ This is exploratory work and summarized in the presentation. It depends on diffe
 
 ### Further Notes
 
-- Every script should be evaluated on a fresh R session, in particular settings that optimize some of the libraries used such as `set_collapse(nthreads = 4, na.rm = FALSE, sort = FALSE)` are not to be used on all scripts. 
+- Every script should be evaluated on a fresh R session, in particular settings that optimize some of the libraries used such as `set_collapse(nthreads = 4, na.rm = FALSE, sort = FALSE)` are not to be used on all scripts. Also watch out for changes in these options within the script. In general, most scripts are meant to be executed from top to bottom. 
