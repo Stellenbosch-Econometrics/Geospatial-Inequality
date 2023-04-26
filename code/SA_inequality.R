@@ -25,7 +25,7 @@ WPOP <- terra::rast("data/WPOP_SA_1km_UNadj/zaf_ppp_2020_1km_Aggregated_UNadj.ti
      fsubset(between(lon, minlon, maxlon) & between(lat, minlat, maxlat))
 
 # Adding VIIRS Nightlights, 463.8m resolution, aggregate by factor 2 to ~1km resolution
-NL21 <- terra::rast("data/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked.dat.tif") %>%
+NL21 <- terra::rast("data/SA_VNL_v21/SA_VNL_v21_npp_2021_global_vcmslcfg_median_masked.dat.tif") %>%
      terra::aggregate(fact = 2, fun = "mean", na.rm = TRUE) %>% 
      as.data.frame(xy = TRUE) %>% set_names(.c(lon, lat, NL21)) %>% 
      fsubset(between(lon, minlon, maxlon) & between(lat, minlat, maxlat))
