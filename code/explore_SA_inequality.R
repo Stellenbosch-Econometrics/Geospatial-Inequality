@@ -28,7 +28,7 @@ ineq_96km2_hex_all %>% qDT() %>% fselect(GINI_mean, WGINI_mean, TI_mean, HI_mean
 
 GINI_1km <- fread("results/SA_IWI_GINI_1km.csv") %>% add_stub("IWI_", cols = -(1:3)) %>%
   merge(fread("results/SA_RWI_GINI_1km.csv") %>% slt(-lon, -lat) %>% add_stub("RWI_", cols = -1L), by = "cell") %>%
-  merge(fread("results/SA_NL20_GINI_1km.csv") %>% slt(-lon, -lat) %>% add_stub("NL_", cols = -1L), by = "cell") %>%
+  merge(fread("results/SA_NL21_GINI_1km.csv") %>% slt(-lon, -lat) %>% add_stub("NL_", cols = -1L), by = "cell") %>%
   ftransform(GINI_5km_mean = psum(list(IWI_GINI_5km, RWI_GINI_5km, NL_GINI_5km) %>% TRA(proportions(1/fmean(.)), "*")),
              WGINI_5km_mean = psum(list(IWI_WGINI_5km, RWI_WGINI_5km, NL_WGINI_5km) %>% TRA(proportions(1/fmean(.)), "*")), 
              GINI_10km_mean = psum(list(IWI_GINI_5km, RWI_GINI_5km, NL_GINI_5km) %>% TRA(proportions(1/fmean(.)), "*")),
@@ -65,7 +65,7 @@ ineq_96km2_hex_all[tmp$HEX96_row, names(tmp)[-1]] <- tmp[, -1]
 rm(tmp)
 
 # Plotting various weighted GINI's in Cape Town (again wide graphics device to have them all in one row)
-plot(ineq_96km2_hex_all[ind_ct, .c(gini_2020, IWI_w_GINI, RWI_w_GINI, NL20_w_GINI)] %>% 
+plot(ineq_96km2_hex_all[ind_ct, .c(gini_2020, IWI_w_GINI, RWI_w_GINI, NL21_w_GINI)] %>% 
      frename(gini_2020 = STP3_w_GINI_2020), lwd = 0.1)
 
 dev.copy(pdf, "figures/Hex95km_CompGini.pdf", width = 11.69, height = 5)
